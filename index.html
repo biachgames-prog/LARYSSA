@@ -55,20 +55,22 @@ section{padding:64px 0;background:var(--surface);backdrop-filter:blur(3px);-webk
 section h2{font-size:1.7rem;margin-bottom:28px;}
 .section-alt{border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
 
-/* CALENDAR */
-.month-nav{display:flex;align-items:center;gap:16px;margin-bottom:22px;}
-.month-nav button{background:none;border:1px solid var(--line);width:36px;height:36px;border-radius:50%;font-size:1.1rem;color:var(--ink);}
-.month-nav button:hover{border-color:var(--accent);color:var(--accent);}
-.month-nav span{font-family:'Playfair Display',serif;font-size:1.15rem;min-width:170px;text-align:center;}
-.weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:8px;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
-.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:.92rem;border:1px solid transparent;background:transparent;color:var(--ink);}
-.cal-day.blank{visibility:hidden;}
-.cal-day.open{border-color:var(--line);background:var(--surface);}
-.cal-day.open:hover{border-color:var(--accent);}
-.cal-day.closed{color:var(--muted);opacity:.4;}
-.cal-day.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
-.cal-day:disabled{cursor:not-allowed;}
+/* CALENDAR — glass style */
+.cal-glass{max-width:420px;border-radius:28px;padding:22px 20px 18px;background:rgba(24,14,14,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.14);box-shadow:0 20px 50px -20px rgba(0,0,0,.5);color:#fff;}
+.cal-glass-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.cal-glass-month{font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;font-weight:600;text-transform:capitalize;}
+.cal-glass-nav{display:flex;gap:8px;}
+.cal-glass-nav button{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.cal-glass-nav button:hover{background:rgba(255,255,255,.18);}
+.cal-strip{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;}
+.cal-strip::-webkit-scrollbar{display:none;}
+.cal-day-col{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;}
+.cal-day-letter{font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;}
+.cal-day{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.92rem;font-weight:600;color:#fff;background:transparent;border:none;position:relative;}
+.cal-day.open:hover{background:rgba(255,255,255,.16);}
+.cal-day.closed{color:rgba(255,255,255,.3);cursor:not-allowed;}
+.cal-day.selected{background:linear-gradient(135deg, var(--accent), var(--gold));box-shadow:0 6px 18px -6px rgba(0,0,0,.5);}
+.cal-day.today:not(.selected)::after{content:"";position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
 .cal-legend{margin-top:14px;font-size:.82rem;color:var(--muted);}
 
 /* SLOTS */
@@ -115,6 +117,16 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
 .loc-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 24px;border-radius:6px;text-decoration:none;font-size:.92rem;transition:background .2s ease;}
 .loc-btn:hover{background:var(--accent-dark);}
 
+.try-card{display:flex;flex-wrap:wrap;align-items:center;gap:22px;background:linear-gradient(135deg, rgba(183,110,121,.14), rgba(198,161,91,.14));border:1px solid var(--line);border-radius:16px;padding:26px 28px;}
+.try-icon{flex:0 0 auto;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;}
+.try-icon svg{width:26px;height:26px;}
+.try-text{flex:1 1 220px;}
+.try-text h2{font-size:1.3rem;margin-bottom:4px;}
+.try-text p{font-size:.9rem;color:var(--muted);max-width:46ch;}
+.try-btn{flex:0 0 auto;background:var(--accent);color:#fff;padding:13px 22px;border-radius:6px;text-decoration:none;font-size:.92rem;white-space:nowrap;transition:background .2s ease;}
+.try-btn:hover{background:var(--accent-dark);}
+@media(max-width:600px){.try-card{flex-direction:column;text-align:center;}}
+
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:14px 26px;border-radius:4px;font-size:.92rem;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:50;}
 [hidden]{display:none !important;}
 
@@ -149,15 +161,16 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
 <section id="agenda">
   <div class="wrap">
     <h2>Escolha o melhor dia</h2>
-    <div class="month-nav">
-      <button id="prevMonth" aria-label="Mês anterior">‹</button>
-      <span id="monthLabel"></span>
-      <button id="nextMonth" aria-label="Próximo mês">›</button>
+    <div class="cal-glass">
+      <div class="cal-glass-header">
+        <span class="cal-glass-month" id="monthLabel"></span>
+        <div class="cal-glass-nav">
+          <button id="prevMonth" aria-label="Mês anterior">‹</button>
+          <button id="nextMonth" aria-label="Próximo mês">›</button>
+        </div>
+      </div>
+      <div class="cal-strip" id="calGrid"></div>
     </div>
-    <div class="weekdays">
-      <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
-    </div>
-    <div class="cal-grid" id="calGrid"></div>
     <p class="cal-legend">Atendemos de terça a sábado · Segunda e domingo fechado</p>
   </div>
 </section>
@@ -173,6 +186,21 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
   <div class="wrap">
     <h2>Escolha o modelo de cílios</h2>
     <div class="styles-row" id="stylesRow"></div>
+  </div>
+</section>
+
+<section id="provador" class="section-alt">
+  <div class="wrap">
+    <div class="try-card">
+      <div class="try-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3.4"/></svg>
+      </div>
+      <div class="try-text">
+        <h2>Teste seus cílios</h2>
+        <p>Abra a câmera e veja ao vivo como cada modelo fica no seu olhar, antes de escolher — tudo direto no seu aparelho.</p>
+      </div>
+      <a class="try-btn" href="testar-cilios.html" target="_blank" rel="noopener">Abrir provador de cílios →</a>
+    </div>
   </div>
 </section>
 
@@ -248,23 +276,35 @@ async function fetchBookedTimes(dateStr){
 
 function dateKey(y,m,d){ return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
 
+const WEEKDAY_LETTERS = ["D","S","T","Q","Q","S","S"];
+
 function renderCalendar(){
   document.getElementById("monthLabel").textContent = `${MONTHS[viewMonth]} de ${viewYear}`;
-  const grid = document.getElementById("calGrid");
-  grid.innerHTML = "";
-  const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+  const strip = document.getElementById("calGrid");
+  strip.innerHTML = "";
   const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
-  for(let i=0;i<firstDow;i++){
-    const b = document.createElement("div"); b.className="cal-day blank"; grid.appendChild(b);
-  }
+  let todayCol = null;
+
   for(let d=1; d<=daysInMonth; d++){
     const dow = new Date(viewYear, viewMonth, d).getDay();
     const cellDate = new Date(viewYear, viewMonth, d); cellDate.setHours(0,0,0,0);
+    const isPast = cellDate < today;
+    const isClosed = CLOSED_DAYS.includes(dow);
+    const isToday = cellDate.getTime() === today.getTime();
+
+    const col = document.createElement("div");
+    col.className = "cal-day-col";
+
+    const letter = document.createElement("span");
+    letter.className = "cal-day-letter";
+    letter.textContent = WEEKDAY_LETTERS[dow];
+    col.appendChild(letter);
+
     const btn = document.createElement("button");
     btn.textContent = d;
     btn.className = "cal-day";
-    const isPast = cellDate < today;
-    const isClosed = CLOSED_DAYS.includes(dow);
+    if(isToday) btn.classList.add("today");
+
     if(isPast || isClosed){
       btn.classList.add("closed");
       btn.disabled = true;
@@ -274,8 +314,12 @@ function renderCalendar(){
       if(key === selectedDate) btn.classList.add("selected");
       btn.addEventListener("click", () => selectDate(viewYear, viewMonth, d));
     }
-    grid.appendChild(btn);
+    col.appendChild(btn);
+    strip.appendChild(col);
+    if(isToday) todayCol = col;
   }
+
+  if(todayCol) todayCol.scrollIntoView({behavior:"instant", inline:"center", block:"nearest"});
 }
 
 async function selectDate(y,m,d){
