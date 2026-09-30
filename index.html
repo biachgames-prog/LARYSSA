@@ -185,6 +185,9 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
 #tryonWidget .card .dot{width:9px;height:9px;border-radius:50%;background:rgba(245,216,103,.3);margin-bottom:6px;transition:.25s;}
 #tryonWidget .card[aria-pressed=true]{background:rgba(245,216,103,.14);border-color:var(--rose);transform:translateY(-2px);}
 #tryonWidget .card[aria-pressed=true] .dot{background:radial-gradient(circle at 30% 30%,#fff,var(--rose));box-shadow:0 0 10px rgba(245,216,103,.7);}
+#tryonWidget .modes{display:flex;gap:4px;margin-top:10px;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(245,216,103,.25);}
+#tryonWidget .modes button{border:0;border-radius:999px;padding:8px 16px;font:500 .88rem Hind,sans-serif;color:var(--mut);background:transparent;cursor:pointer;transition:background .25s,color .25s;}
+#tryonWidget .modes button[aria-pressed=true]{background:linear-gradient(120deg,#C8961E,#F5D867 50%,#E0AE35);color:#2A1C04;}
 #tryonWidget #desc{min-height:4.6em;width:100%;color:var(--mut);line-height:1.55;margin:8px 4px 0;text-align:center;}
 @media (prefers-reduced-motion:reduce){#tryonWidget .pearl.big,#tryonWidget .tag.pop,#tryonWidget .flash.go{animation:none;}#tryonWidget *{transition:none!important;}}
 
@@ -338,6 +341,10 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
           <button class="ib" id="flip" aria-label="Virar câmera"><i><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4L4 9m0-4v4h4M4 13a8 8 0 0 0 14 4l2-2m0 4v-4h-4"/></svg></i>Virar câmera</button>
         </div>
 
+        <div class="modes" id="modes" role="group" aria-label="Tipo de filtro">
+          <button type="button" data-mode="3d" aria-pressed="true">✦ Realista 3D</button>
+          <button type="button" data-mode="foto" aria-pressed="false">Foto</button>
+        </div>
         <div class="cards" id="chips" role="group" aria-label="Modelos de cílios"></div>
         <p id="desc"></p>
         <a id="wa" class="tw-cta" hidden target="_blank" rel="noopener">Quero este modelo</a>
@@ -755,7 +762,7 @@ const EYES=[
 
 const $=id=>document.getElementById(id);
 const v=$("v"),c=$("c"),ctx=c.getContext("2d");
-let cur="m1",facing="user",stream=null,lm=null,lastT=-1,sm={},raf=0;
+let cur="m1",facing="user",stream=null,lm=null,lastT=-1,sm={},sm3={},raf=0,mode="3d";
 
 const WHATSAPP="";   /* opcional: número com DDI e DDD, ex.: "5579999999999" — ativa o botão "Quero este modelo" */
 const TAGS={"m1":"Volume natural","m2":"Olhar levantado","m3":"Volume delicado","m4":"Volume intenso","m5":"Olhar de raposa","m6":"Volume macio","m7":"Longo e elegante"};
@@ -910,6 +917,185 @@ function drawEye(e,pts,S,iod,up){
   return[X0-6,Y0-6,X1+6,Y1+6];
 }
 
+/* =====================================================================
+   FILTRO REALISTA 3D — cada fio é um cabelo em 3D (raiz na pálpebra, sai para
+   frente e curva para cima), projetado com a profundidade real do rosto,
+   iluminado como fio de cabelo (brilho especular Kajiya-Kay) e desenhado
+   em WebGL com antisserrilhado. Gira junto com a cabeça, encurta de perfil,
+   acompanha a piscada e pega a luz da cena.
+   ===================================================================== */
+const LASH3D={
+ /* n: pontos de implante | fan: fios por leque | spread: abertura do leque
+    lin/lout: comprimento canto interno/externo (× olho) | pow: perfil
+    lift: ângulo de saída | curl: curvatura (C/D) | sweep: puxada p/ canto externo
+    th: espessura | clump: fios agrupados em pontas | col: cor do fio (0–1) */
+ "m1":{n:48,fan:2,spread:.10,lin:0.36,lout:0.48,pow:1.1,lift:0.40,curl:1.05,sweep:.30,th:.017,clump:0,  col:[.055,.042,.034]},
+ "m2":{n:30,fan:3,spread:.05,lin:0.37,lout:0.52,pow:1.0,lift:0.44,curl:1.15,sweep:.24,th:.015,clump:.85,col:[.045,.035,.03]},
+ "m3":{n:42,fan:5,spread:.16,lin:0.36,lout:0.47,pow:1.0,lift:0.40,curl:1.05,sweep:.28,th:.0105,clump:0, col:[.05,.04,.033]},
+ "m4":{n:44,fan:6,spread:.18,lin:0.40,lout:0.53,pow:.9, lift:0.42,curl:1.12,sweep:.30,th:.0105,clump:0, col:[.035,.028,.024]},
+ "m5":{n:44,fan:3,spread:.10,lin:0.23,lout:0.56,pow:1.8,lift:0.50,curl:.92, sweep:.62,th:.0125,clump:0, col:[.05,.038,.03]},
+ "m6":{n:42,fan:7,spread:.22,lin:0.37,lout:0.46,pow:1.0,lift:0.40,curl:1.18,sweep:.28,th:.0078,clump:0, col:[.03,.024,.02]},
+ "m7":{n:34,fan:2,spread:.07,lin:0.41,lout:0.58,pow:1.2,lift:0.44,curl:1.0, sweep:.34,th:.0120,clump:.4, col:[.06,.045,.036]}
+};
+const V3={
+  sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],
+  mul:(a,k)=>[a[0]*k,a[1]*k,a[2]*k],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+  cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+  norm:a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]}
+};
+/* fios pré-sorteados por modelo (fixos → nada treme) */
+const STR={};
+function strands(k){
+  if(STR[k])return STR[k];
+  const S=LASH3D[k],out=[];
+  for(let i=0;i<S.n;i++){
+    const u=.025+.905*(i+.5+(rnd(i,11)-.5)*.6)/S.n, ca=(rnd(i,19)-.5)*.14;
+    for(let f=0;f<S.fan;f++){
+      const fo=S.fan>1?f/(S.fan-1)-.5:0,h=i*13+f;
+      out.push({u,fan:fo*S.spread+(rnd(h,12)-.5)*.06,ca,
+        len:.86+rnd(h,13)*.24-Math.abs(fo)*.10,curl:.88+rnd(h,14)*.24,lift:(rnd(h,15)-.5)*.14,
+        th:.7+rnd(h,16)*.6,shade:.85+rnd(h,17)*.3,wav:(rnd(h,18)-.5)*.06});
+    }
+  }
+  return STR[k]=out;
+}
+/* suavização 3D (x,y em pixels, z na mesma escala de x) */
+function smooth3(idx,face){
+  const W=c.width,H=c.height,fw=Math.hypot((face[33].x-face[263].x)*W,(face[33].y-face[263].y)*H)||100,o={};
+  idx.forEach(i=>{
+    const p=face[i],q=[p.x*W,p.y*H,p.z*W],o0=sm3[i];
+    if(!o0)sm3[i]=q;else{const d=Math.hypot(q[0]-o0[0],q[1]-o0[1])/fw,a=Math.min(.9,.22+d*14);
+      sm3[i]=[o0[0]+(q[0]-o0[0])*a,o0[1]+(q[1]-o0[1])*a,o0[2]+(q[2]-o0[2])*a*.6]}
+    o[i]=sm3[i];
+  });
+  return o;
+}
+function cr3(P,f){
+  const n=P.length-1;f=Math.max(0,Math.min(n,f));
+  const i=Math.min(Math.floor(f),n-1),t=f-i,a=P[Math.max(i-1,0)],b=P[i],cc=P[i+1],d=P[Math.min(i+2,n)];
+  const q=k=>.5*(2*b[k]+(-a[k]+cc[k])*t+(2*a[k]-5*b[k]+4*cc[k]-d[k])*t*t+(-a[k]+3*b[k]-3*cc[k]+d[k])*t*t*t);
+  return[q(0),q(1),q(2)];
+}
+
+/* ---- WebGL ---- */
+const glc=document.createElement("canvas");
+const gl=glc.getContext("webgl2",{antialias:true,premultipliedAlpha:true,alpha:true})||glc.getContext("webgl",{antialias:true,premultipliedAlpha:true,alpha:true});
+let GLP=null,GLB=null,VB=new Float32Array(1<<17),vn=0;
+if(gl){
+  const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);return o};
+  const pr=gl.createProgram();
+  gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec2 p;attribute vec4 c;uniform vec2 r;varying vec4 vc;void main(){vc=c;gl_Position=vec4(p.x/r.x*2.-1.,1.-p.y/r.y*2.,0.,1.);}"));
+  gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec4 vc;void main(){gl_FragColor=vc;}"));
+  gl.linkProgram(pr);
+  if(gl.getProgramParameter(pr,gl.LINK_STATUS)){GLP={pr,p:gl.getAttribLocation(pr,"p"),c:gl.getAttribLocation(pr,"c"),r:gl.getUniformLocation(pr,"r")};GLB=gl.createBuffer();}
+}
+if(!GLP)mode="foto";
+function pushV(x,y,r,g,b,a){
+  if(vn+6>VB.length){const n=new Float32Array(VB.length*2);n.set(VB);VB=n}
+  VB[vn++]=x;VB[vn++]=y;VB[vn++]=r*a;VB[vn++]=g*a;VB[vn++]=b*a;VB[vn++]=a;   /* pré-multiplicado */
+}
+
+/* ilumina um ponto do fio: difuso suave + brilho especular de cabelo */
+const LDIR=V3.norm([.15,-.75,-.65]),VDIR=[0,0,-1],HDIR=V3.norm(V3.add(LDIR,VDIR));
+function shadeHair(T,S,st,amb){
+  const th=V3.dot(T,HDIR),spec=Math.pow(Math.max(0,Math.sqrt(1-th*th)),70)*.55;
+  const tl=V3.dot(T,LDIR),dif=.55+.45*Math.sqrt(Math.max(0,1-tl*tl));
+  const k=dif*st.shade;
+  return[S.col[0]*k*amb[0]*2.2+spec*(.35+.65*amb[0]),S.col[1]*k*amb[1]*2.2+spec*(.33+.6*amb[1]),S.col[2]*k*amb[2]*2.2+spec*(.3+.55*amb[2])];
+}
+
+function buildEye3D(e,pts,S,key,F,U,iod,amb,bb){
+  const P=e.up.map(i=>pts[i]),Lo=e.lo.map(i=>pts[i]);
+  const w2=Math.hypot(P[0][0]-P[8][0],P[0][1]-P[8][1])||1;
+  const w3=Math.hypot(P[0][0]-P[8][0],P[0][1]-P[8][1],P[0][2]-P[8][2])||1;
+  const E=.5*w3+.5*iod*.3;                                    /* tamanho do olho em 3D */
+  const lowY=[(Lo[0][0]+Lo[1][0])/2,(Lo[0][1]+Lo[1][1])/2];
+  const open=Math.hypot(P[4][0]-lowY[0],P[4][1]-lowY[1])/w2,k=clamp((open-.03)/.12),sk=2*(k*k*(3-2*k))-1;
+  const den=Math.min(1,1.35/Math.sqrt(S.fan)),SEG=9;
+  const n=P.length-1;
+  for(const st of strands(key)){
+    const u=st.u,o=1-u,f=u*n;
+    const r=cr3(P,f),ra=cr3(P,f-.12),rb=cr3(P,f+.12);
+    const O=V3.norm(V3.sub(ra,rb));                           /* → canto externo */
+    let N=V3.norm(V3.cross(F,O));if(V3.dot(N,U)<0)N=V3.mul(N,-1);   /* normal da pálpebra (para cima) */
+    N=V3.mul(N,sk);
+    let len=S.lin+(S.lout-S.lin)*Math.pow(o,S.pow);
+    len*=(.45+.55*sstep(0,.33,1-u))*(.8+.2*sstep(0,.12,u)+(S.pow>1.5?.15*(1-sstep(0,.12,u)):0));
+    const L=E*len*st.len,dl=L/SEG;
+    let side=S.sweep*Math.pow(o,1.3)-.2*u*u+st.fan;
+    if(S.clump)side=side*(1-S.clump*.4)+st.ca*S.clump;
+    const W0=Math.max(.35,E*S.th*st.th);
+    let p=r.slice(),px=null,py=null;
+    const lefts=[],rights=[],cols=[],alph=[];
+    for(let q=0;q<=SEG;q++){
+      const s=q/SEG;
+      const th=S.lift+st.lift+S.curl*st.curl*Math.pow(s,1.25);        /* sai para frente, curva para cima */
+      const sd=side*(.35+.65*s)+st.wav*Math.sin(s*3.1);
+      const T=V3.norm(V3.add(V3.add(V3.mul(F,Math.cos(th)),V3.mul(N,Math.sin(th))),V3.mul(O,sd)));
+      if(q>0)p=V3.add(p,V3.mul(T,dl));
+      /* projeção ortográfica (a câmera olha para +z) */
+      const x=p[0],y=p[1];
+      let tx=T[0],ty=T[1];const tl=Math.hypot(tx,ty);
+      if(tl<.12){tx=N[0]||0;ty=N[1]||-1;const l2=Math.hypot(tx,ty)||1;tx/=l2;ty/=l2}else{tx/=tl;ty/=tl}
+      let wdt=W0*Math.pow(1-s,.8)+.12,a=(.97-.4*s)*den;
+      if(wdt<1){a*=Math.max(.25,wdt);wdt=1}                          /* fio sub-pixel: cobre 1px com menos opacidade */
+      lefts.push([x-ty*wdt*.5,y+tx*wdt*.5]);rights.push([x+ty*wdt*.5,y-tx*wdt*.5]);
+      cols.push(shadeHair(T,S,st,amb));alph.push(a*(q===SEG?0:1));
+      if(x<bb[0])bb[0]=x;if(x>bb[2])bb[2]=x;if(y<bb[1])bb[1]=y;if(y>bb[3])bb[3]=y;
+    }
+    for(let q=0;q<SEG;q++){
+      const A=lefts[q],B=rights[q],C=lefts[q+1],D=rights[q+1],ca=cols[q],cb=cols[q+1],aa=alph[q],ab=alph[q+1];
+      pushV(A[0],A[1],ca[0],ca[1],ca[2],aa);pushV(B[0],B[1],ca[0],ca[1],ca[2],aa);pushV(C[0],C[1],cb[0],cb[1],cb[2],ab);
+      pushV(B[0],B[1],ca[0],ca[1],ca[2],aa);pushV(D[0],D[1],cb[0],cb[1],cb[2],ab);pushV(C[0],C[1],cb[0],cb[1],cb[2],ab);
+    }
+  }
+  /* linha de implante (raiz) desenhada direto na imagem */
+  const g=ctx,E2=E;
+  const gl2=g.createLinearGradient(P[0][0],P[0][1],P[8][0],P[8][1]);
+  gl2.addColorStop(0,"rgba(10,8,6,.5)");gl2.addColorStop(.6,"rgba(10,8,6,.4)");gl2.addColorStop(.95,"rgba(10,8,6,0)");
+  g.strokeStyle=gl2;g.lineWidth=Math.max(1,E2*.026);g.lineCap="round";g.beginPath();
+  for(let j=0;j<=20;j++){const q=cr3(P,j*.97/20*n);j?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])}
+  g.stroke();
+}
+
+function draw3D(face){
+  const idx=EYES.flatMap(e=>e.up.concat(e.lo)).concat(KEEP),pts=smooth3(idx,face);
+  const R=V3.sub(pts[263],pts[33]),Uraw=V3.sub(pts[10],pts[152]);
+  let F=V3.norm(V3.cross(R,Uraw));if(F[2]>0)F=V3.mul(F,-1);          /* frente = em direção à câmera */
+  const U=V3.norm(V3.sub(Uraw,V3.mul(F,V3.dot(Uraw,F))));
+  const iod=Math.hypot(R[0],R[1],R[2])||100;
+  /* luz ambiente a partir da pele */
+  sampleTone({6:{x:pts[6][0],y:pts[6][1]}},iod);
+  const tl=(tone[0]+tone[1]+tone[2])/3||1,amb=tone.map(x=>clamp(x/tl,.6,1.5)*clamp(tl/150,.45,1.25)*.55);
+  if(glc.width!==c.width||glc.height!==c.height){glc.width=c.width;glc.height=c.height}
+  vn=0;const bb=[1e9,1e9,-1e9,-1e9],S=LASH3D[cur];
+  EYES.forEach(e=>buildEye3D(e,pts,S,cur,F,U,iod,amb,bb));
+  gl.viewport(0,0,glc.width,glc.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(GLP.pr);gl.uniform2f(GLP.r,glc.width,glc.height);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  gl.bindBuffer(gl.ARRAY_BUFFER,GLB);gl.bufferData(gl.ARRAY_BUFFER,VB.subarray(0,vn),gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(GLP.p);gl.vertexAttribPointer(GLP.p,2,gl.FLOAT,false,24,0);
+  gl.enableVertexAttribArray(GLP.c);gl.vertexAttribPointer(GLP.c,4,gl.FLOAT,false,24,8);
+  gl.drawArrays(gl.TRIANGLES,0,vn/6);
+  const pad=10,x0=Math.max(0,Math.floor(bb[0]-pad)),y0=Math.max(0,Math.floor(bb[1]-pad));
+  const w=Math.min(c.width,Math.ceil(bb[2]+pad))-x0,h=Math.min(c.height,Math.ceil(bb[3]+pad))-y0;
+  if(w<=0||h<=0)return;
+  const Es=iod*.3;
+  /* sombra de contato dos fios na pele (luz de cima) */
+  if(blurOK){ctx.filter=`blur(${Math.max(1.6,Es*.04).toFixed(1)}px)`;ctx.globalAlpha=.24;
+    ctx.drawImage(glc,x0,y0,w,h,x0+U[0]*-Es*.045,y0+U[1]*-Es*.045,w,h);}
+  /* fios com o mesmo foco da câmera */
+  ctx.globalAlpha=1;if(blurOK)ctx.filter=`blur(${Math.max(.25,Es*.003).toFixed(2)}px)`;
+  ctx.drawImage(glc,x0,y0,w,h,x0,y0,w,h);
+  ctx.filter="none";ctx.globalAlpha=1;
+}
+document.querySelectorAll("#modes button").forEach(b=>{
+  if(b.dataset.mode==="3d"&&!GLP){b.disabled=true;b.title="Seu aparelho não suporta WebGL";}
+  b.onclick=()=>{if(b.disabled)return;mode=b.dataset.mode;
+    document.querySelectorAll("#modes button").forEach(x=>x.setAttribute("aria-pressed",x===b));};
+  if(!GLP)b.setAttribute("aria-pressed",b.dataset.mode==="foto");
+});
+
 function loop(){
   raf=requestAnimationFrame(loop);
   if(v.readyState<2)return;
@@ -923,7 +1109,8 @@ function loop(){
     const r=lm.detectForVideo(v,performance.now());
     loop.face=r.faceLandmarks&&r.faceLandmarks[0];
   }
-  if(loop.face&&!window.__off){
+  if(loop.face&&!window.__off&&mode==="3d"&&GLP){draw3D(loop.face)}
+  else if(loop.face&&!window.__off){
     const all=EYES.flatMap(e=>e.up.concat(e.lo)).concat(KEEP),pts=smooth(all,loop.face);
     let ux=pts[10].x-pts[152].x,uy=pts[10].y-pts[152].y;const ul=Math.hypot(ux,uy)||1;const up={x:ux/ul,y:uy/ul};
     const iod=Math.hypot(pts[33].x-pts[263].x,pts[33].y-pts[263].y)||100;
