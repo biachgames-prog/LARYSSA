@@ -423,6 +423,22 @@ async function fetchBookedTimes(dateStr){
   return (data || []).map(row => row.booking_time);
 }
 
+// Bloqueios feitos no painel admin (dia inteiro = time null)
+let BLOCKED = [];
+async function loadBlocked(){
+  const { data, error } = await sb.rpc("get_blocked_slots");
+  if(error){ console.error(error); return; }
+  BLOCKED = (data || []).map(r => ({ date: r.block_date, time: r.block_time ? String(r.block_time).slice(0,5) : null }));
+}
+function isDayBlocked(key){
+  if(BLOCKED.some(b => b.date === key && b.time === null)) return true;
+  const blockedTimes = BLOCKED.filter(b => b.date === key && b.time).map(b => b.time);
+  return SLOT_TIMES.every(t => blockedTimes.includes(t));
+}
+function isSlotBlocked(key, t){
+  return BLOCKED.some(b => b.date === key && (b.time === null || b.time === t));
+}
+
 function dateKey(y,m,d){ return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
 
 const WEEKDAY_LETTERS = ["D","S","T","Q","Q","S","S"];
@@ -438,7 +454,7 @@ function renderCalendar(){
     const dow = new Date(viewYear, viewMonth, d).getDay();
     const cellDate = new Date(viewYear, viewMonth, d); cellDate.setHours(0,0,0,0);
     const isPast = cellDate < today;
-    const isClosed = CLOSED_DAYS.includes(dow);
+    const isClosed = CLOSED_DAYS.includes(dow) || isDayBlocked(dateKey(viewYear, viewMonth, d));
     const isToday = cellDate.getTime() === today.getTime();
 
     const col = document.createElement("div");
@@ -486,7 +502,7 @@ async function selectDate(y,m,d){
 async function renderSlots(){
   const wrap = document.getElementById("slotsGrid");
   wrap.innerHTML = `<p class="empty-msg">Carregando horários…</p>`;
-  const takenTimes = await fetchBookedTimes(selectedDate);
+  const [takenTimes] = await Promise.all([fetchBookedTimes(selectedDate), loadBlocked()]);
   wrap.innerHTML = "";
   const [y,m,d] = selectedDate.split("-").map(Number);
   const isToday = today.getFullYear()===y && (today.getMonth()+1)===m && today.getDate()===d;
@@ -496,6 +512,7 @@ async function renderSlots(){
   SLOT_TIMES.forEach(t=>{
     const [h,min] = t.split(":").map(Number);
     if(isToday && (h*60+min) <= nowMinutes) return;
+    if(isSlotBlocked(selectedDate, t)) return; // bloqueado pela Larissa: nem aparece
     any = true;
     const btn = document.createElement("button");
     btn.className = "slot";
@@ -517,6 +534,7 @@ async function renderSlots(){
     const p = document.createElement("p");
     p.className = "empty-msg";
     p.textContent = "Não há mais horários disponíveis neste dia.";
+    if(selectedTime){ selectedTime = null; updateFormVisibility(); }
     wrap.appendChild(p);
   }
 }
@@ -603,7 +621,12 @@ document.getElementById("bookingForm").addEventListener("submit", async (e)=>{
   submitBtn.textContent = originalLabel;
 
   if(error){
-    if(error.code === "23505"){
+    if(error.code === "P0001" || String(error.message||"").includes("slot_blocked")){
+      showToast("Esse horário ficou indisponível. Escolha outro, por favor.");
+      selectedTime = null;
+      await loadBlocked(); renderCalendar(); await renderSlots();
+      updateFormVisibility();
+    } else if(error.code === "23505"){
       showToast("Ih, esse horário acabou de ser reservado por outra cliente. Escolha outro.");
       await renderSlots();
       selectedTime = null;
@@ -647,6 +670,7 @@ function showToast(msg){
 
 renderCalendar();
 renderStyles();
+loadBlocked().then(renderCalendar); // aplica bloqueios do painel assim que carregar
 
 // Aplica o mesmo vídeo ao fundo fixo e ao hero (sem duplicar o arquivo)
 document.getElementById("bgVideo").src = VIDEO_SRC;
