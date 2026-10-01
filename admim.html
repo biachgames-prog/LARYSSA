@@ -128,6 +128,47 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .toast{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;flex-direction:column;gap:8px}
 .toast div{background:var(--card2);border:1px solid #6b5320;border-left:4px solid var(--gold);padding:12px 16px;border-radius:12px;box-shadow:0 16px 40px -10px #000;font-size:.88rem;max-width:340px;animation:fade .3s}
 @media(max-width:640px){main{padding:14px}.top{padding:10px 14px}.tabs{padding:10px 14px 0}.kpi b{font-size:1.4rem}.kpi.hero b{font-size:1.7rem}}
+
+/* AGENDA */
+.ag{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;align-items:start}
+@media(max-width:900px){.ag{grid-template-columns:1fr}}
+.ag-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.ag-head b{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600}.ag-head b::first-letter{text-transform:uppercase}
+.ag-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.agw{text-align:center;font-size:.7rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;padding-bottom:2px}
+.cd{min-height:68px;border:1px solid var(--line);border-radius:10px;background:#0f0b06;padding:6px 7px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:.78rem;color:var(--ink);transition:border-color .15s}
+.cd:hover{border-color:var(--gold)}
+.cd b{font-weight:500;font-size:.9rem}
+.cd small{font-size:.66rem;color:var(--mut);line-height:1.2}
+.cd.off{opacity:.38}
+.cd.past{opacity:.5}
+.cd.today b{color:var(--gold2)}
+.cd.sel{border-color:var(--gold);background:rgba(227,182,64,.1)}
+.cd.blk{border-color:#5a2c25;background:rgba(224,122,106,.09)}
+.cd.blk small{color:var(--bad)}
+.cd.part small.p{color:var(--warn)}
+@media(max-width:640px){.cd{min-height:54px;padding:4px 5px}.cd small{font-size:.58rem}.ag-grid{gap:4px}}
+.slotrow{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid #2a2114;border-radius:10px;background:#0f0b06;margin-bottom:8px}
+.slotrow .t{font-family:'Playfair Display',serif;color:var(--gold2);font-size:1.05rem}
+.slotrow small{display:block;color:var(--dim);font-size:.74rem}
+.slotrow.is-blk{border-color:#5a2c25}.slotrow.is-bk{border-color:#2c4460}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;border:1px solid var(--line)}
+.tag.free{color:var(--ok);border-color:#2b5237}.tag.blk{color:var(--bad);border-color:#5a2c25}.tag.bk{color:var(--info);border-color:#2c4460}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.blklist div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border:1px solid #2a2114;border-radius:10px;background:#0f0b06;margin-bottom:6px;font-size:.84rem}
+.blklist small{color:var(--dim)}
+.btn.wa-b{background:#1f3b2a;color:#9be8b4;border:1px solid #2b5237}
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:16px;overflow-y:auto}
+.modal-card{width:min(100%,520px);background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid #6b5320;border-radius:18px;padding:22px;box-shadow:0 30px 80px -20px #000}
+.modal-card h3{font-size:1.2rem;margin-bottom:4px}
+.modal-card .who{color:var(--mut);font-size:.86rem;margin-bottom:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chips button{border:1px solid var(--line);background:#0f0b06;color:var(--mut);border-radius:999px;padding:5px 12px;font-size:.78rem}
+.chips button:hover{border-color:var(--gold);color:var(--ink)}
+textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
+.modal-card .hint{color:var(--dim);font-size:.75rem;margin-top:8px}
+.modal-card .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -168,6 +209,7 @@ td.num,th.num{text-align:right;white-space:nowrap}
   <nav class="tabs" id="tabs">
     <button data-t="overview" class="on">Visão geral</button>
     <button data-t="orders">Pedidos · CRM<span class="count" id="cOrders">0</span></button>
+    <button data-t="agenda">Agenda</button>
     <button data-t="clients">Clientes<span class="count" id="cClients">0</span></button>
     <button data-t="daily">Vendas por dia</button>
     <button data-t="models">Modelos & preços</button>
@@ -202,11 +244,40 @@ td.num,th.num{text-align:right;white-space:nowrap}
       </table></div>
     </section>
 
+    <!-- AGENDA -->
+    <section class="panel" id="p-agenda">
+      <div class="ag">
+        <div class="box">
+          <div class="ag-head">
+            <button class="btn ghost sm" id="agPrev">‹</button>
+            <b id="agMonth"></b>
+            <button class="btn ghost sm" id="agNext">›</button>
+          </div>
+          <div class="ag-grid" id="agGrid"></div>
+          <p style="color:var(--dim);font-size:.75rem;margin-top:10px">Toque em um dia para ver os horários. Dias em vermelho estão bloqueados no site; cinza = fechado (dom/seg).</p>
+        </div>
+        <div>
+          <div class="box" id="agDetail" style="margin-bottom:14px"></div>
+          <div class="box" style="margin-bottom:14px">
+            <h3>Bloquear período <small>férias, viagem, feriado…</small></h3>
+            <div class="toolbar" style="margin-bottom:8px">
+              <input type="date" class="inp sm" id="rgFrom" style="min-width:0"> <span>até</span> <input type="date" class="inp sm" id="rgTo" style="min-width:0">
+            </div>
+            <div class="toolbar" style="margin:0">
+              <input class="inp sm" id="rgReason" placeholder="Motivo (só você vê)" style="flex:1">
+              <button class="btn sm" id="rgBtn">Bloquear</button>
+            </div>
+          </div>
+          <div class="box"><h3>Bloqueios ativos <small id="blkCount"></small></h3><div class="blklist" id="blkList"></div></div>
+        </div>
+      </div>
+    </section>
+
     <!-- CLIENTES -->
     <section class="panel" id="p-clients">
       <div class="toolbar"><input class="inp sm" id="qc" placeholder="Buscar cliente…"></div>
       <div class="tw"><table>
-        <thead><tr><th>Cliente</th><th>WhatsApp</th><th class="num">Pedidos</th><th class="num">Total gasto</th><th>Modelo favorito</th><th>Último atendimento</th><th>Primeiro pedido</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>WhatsApp</th><th class="num">Pedidos</th><th class="num">Total gasto</th><th>Modelo favorito</th><th>Último atendimento</th><th>Primeiro pedido</th><th>Aviso</th></tr></thead>
         <tbody id="clientsBody"></tbody>
       </table></div>
     </section>
@@ -246,6 +317,19 @@ td.num,th.num{text-align:right;white-space:nowrap}
     </section>
   </main>
 </div>
+<div class="modal" id="nfModal" hidden>
+  <div class="modal-card">
+    <h3>Avisar cliente</h3>
+    <div class="who" id="nfWho"></div>
+    <div class="chips" id="nfChips">
+      <button data-tpl="blank">Em branco</button><button data-tpl="imprevisto">Imprevisto / remarcar</button><button data-tpl="atraso">Atraso</button><button data-tpl="lembrete">Lembrete</button>
+    </div>
+    <textarea class="inp" id="nfText" placeholder="Digite sua mensagem…"></textarea>
+    <div class="hint">Abre a conversa no WhatsApp com o número da cliente e a mensagem pronta — é só tocar em enviar.</div>
+    <div class="err" id="nfErr"></div>
+    <div class="row"><button class="btn ghost" id="nfCancel">Cancelar</button><button class="btn" id="nfSend">Abrir no WhatsApp</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -258,6 +342,11 @@ const NOT_SALE = ["cancelado","faltou"];
 const PALETTE = ["#F5D867","#E3B640","#C8961E","#FFE9A8","#B8861C","#E8CF8A","#9C7A2A","#FBE27A","#D9A441","#7d6d4f"];
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* >>> Mantenha igual ao site (index.html): horários e dias fechados <<< */
+const SLOT_TIMES=["09:00","11:00","13:00","15:00","17:00"];
+const CLOSED_DAYS=[0,1]; // domingo, segunda
+const MONTHS=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+let BLOCKS=[], CLIENTS={}, AG={y:new Date().getFullYear(),m:new Date().getMonth()}, agSel=null;
 let ALL=[], PRICES=[], period="30", basis="pedido", charts={}, channel=null, justAdded=new Set();
 
 /* ============ HELPERS ============ */
@@ -311,7 +400,7 @@ async function boot(){
   if(error||!ok){await sb.auth.signOut();$("login").hidden=false;$("app").hidden=true;
     $("loginErr").textContent=error?"Rode o arquivo admin-setup.sql no Supabase primeiro.":"Este usuário não tem acesso de administrador.";return}
   $("login").hidden=true;$("app").hidden=false;
-  await Promise.all([loadBookings(),loadPrices()]);
+  await Promise.all([loadBookings(),loadPrices(),loadBlocks()]);
   fillFilters();renderAll();subscribe();
 }
 
@@ -349,7 +438,7 @@ async function updateBooking(id,patch){
 }
 
 /* ============ RENDER ============ */
-function renderAll(){renderMissing();renderOverview();renderOrders();renderClients();renderDaily();renderModels()}
+function renderAll(){renderMissing();renderOverview();renderOrders();renderAgenda();renderClients();renderDaily();renderModels()}
 
 function renderMissing(){
   const miss={};ALL.filter(b=>b.price==null&&isSale(b)).forEach(b=>miss[b.style||"—"]=(miss[b.style||"—"]||0)+1);
@@ -451,16 +540,17 @@ $("ordersBody").addEventListener("click",async e=>{
 
 function renderClients(){
   const q=$("qc").value.toLowerCase().trim(),m={};
-  ALL.forEach(b=>{const k=digits(b.phone)||b.name;const c=m[k]=m[k]||{name:b.name,phone:b.phone,n:0,rev:0,models:{},last:"",first:b.created_at};
+  ALL.forEach(b=>{const k=digits(b.phone)||b.name;const c=m[k]=m[k]||{key:k,name:b.name,phone:b.phone,n:0,rev:0,models:{},last:"",first:b.created_at};
     if(isSale(b)){c.n++;c.rev+=Number(b.price)||0;c.models[b.style]=(c.models[b.style]||0)+1}
     if((b.booking_date||"")>c.last){c.last=b.booking_date;c.name=b.name}
     if(b.created_at&&(!c.first||b.created_at<c.first))c.first=b.created_at});
   let list=Object.values(m).filter(c=>!q||c.name.toLowerCase().includes(q)||digits(c.phone).includes(digits(q)||"#")).sort((a,b)=>b.rev-a.rev||b.n-a.n);
-  $("cClients").textContent=Object.keys(m).length;
+  CLIENTS=m;$("cClients").textContent=Object.keys(m).length;
   $("clientsBody").innerHTML=list.length?list.map(c=>{const fav=Object.entries(c.models).sort((a,b)=>b[1]-a[1])[0];
     return`<tr><td class="cli"><b>${esc(c.name)}</b>${c.n>1?`<small>cliente recorrente</small>`:""}</td>
       <td><a class="wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">${WA_ICON}${esc(fmtPhone(c.phone))}</a></td>
-      <td class="num">${c.n}</td><td class="num money">${brl(c.rev)}</td><td>${fav?esc(fav[0]):"—"}</td><td>${fmtDay(c.last)}</td><td>${fmtDT(c.first)}</td></tr>`}).join(""):`<tr><td colspan="7" class="empty">Nenhum cliente</td></tr>`;
+      <td class="num">${c.n}</td><td class="num money">${brl(c.rev)}</td><td>${fav?esc(fav[0]):"—"}</td><td>${fmtDay(c.last)}</td><td>${fmtDT(c.first)}</td>
+       <td><button class="btn wa-b sm" data-notify="${esc(c.key)}" title="Enviar mensagem de aviso pelo WhatsApp">${WA_ICON}Avisar</button></td></tr>`}).join(""):`<tr><td colspan="8" class="empty">Nenhum cliente</td></tr>`;
 }
 $("qc").addEventListener("input",renderClients);
 
@@ -511,6 +601,157 @@ async function applyMissing(){
   for(const b of todo)await updateBooking(b.id,{price:Number(find(b.style).price)});
   renderAll();
 }
+
+/* ============ AGENDA: BLOQUEIOS ============ */
+async function loadBlocks(){
+  const{data,error}=await sb.from("blocked_slots").select("*").order("block_date");
+  if(error){BLOCKS=[];toast("Agenda: rode o arquivo <b>admin-agenda.sql</b> no Supabase. ("+esc(error.message)+")");return}
+  BLOCKS=data.map(b=>({...b,block_time:b.block_time?String(b.block_time).slice(0,5):null}));
+}
+async function addBlock(date,time,reason){
+  const{data,error}=await sb.from("blocked_slots").insert({block_date:date,block_time:time,reason:reason||null}).select().single();
+  if(error){if(error.code!=="23505")toast("Não bloqueou: "+esc(error.message));return false}
+  BLOCKS.push({...data,block_time:data.block_time?String(data.block_time).slice(0,5):null});return true;
+}
+async function delBlocks(ids){
+  if(!ids.length)return true;
+  const{error}=await sb.from("blocked_slots").delete().in("id",ids);
+  if(error){toast("Não liberou: "+esc(error.message));return false}
+  BLOCKS=BLOCKS.filter(b=>!ids.includes(b.id));return true;
+}
+const dayBlock=k=>BLOCKS.find(b=>b.block_date===k&&b.block_time===null);
+const slotBlock=(k,t)=>BLOCKS.find(b=>b.block_date===k&&b.block_time===t);
+const bookingsOn=k=>ALL.filter(b=>b.booking_date===k);
+
+function renderAgenda(){
+  const{y,m}=AG,todayK=keyOf(new Date());
+  $("agMonth").textContent=`${MONTHS[m]} de ${y}`;
+  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+  const cnt={};ALL.filter(isSale).forEach(b=>cnt[b.booking_date]=(cnt[b.booking_date]||0)+1);
+  let h=["D","S","T","Q","Q","S","S"].map(w=>`<span class="agw">${w}</span>`).join("")+"<span></span>".repeat(first);
+  for(let d=1;d<=dim;d++){
+    const k=`${y}-${pad(m+1)}-${pad(d)}`,dow=new Date(y,m,d).getDay();
+    const full=!!dayBlock(k),part=BLOCKS.filter(b=>b.block_date===k&&b.block_time).length,n=cnt[k]||0;
+    const cls=["cd",CLOSED_DAYS.includes(dow)&&!n?"off":"",k<todayK?"past":"",k===todayK?"today":"",k===agSel?"sel":"",full?"blk":"",part?"part":""].join(" ");
+    h+=`<button class="${cls}" data-k="${k}"><b>${d}</b>${full?`<small>Bloqueado</small>`:""}${part&&!full?`<small class="p">🔒 ${part} horário(s)</small>`:""}${n?`<small>${n} agend.</small>`:""}</button>`;
+  }
+  $("agGrid").innerHTML=h;
+  renderAgendaDay();renderBlockList();
+}
+function renderAgendaDay(){
+  const box=$("agDetail");
+  if(!agSel){box.innerHTML=`<h3>Horários do dia</h3><div class="empty" style="padding:24px">Selecione um dia no calendário.</div>`;return}
+  const k=agSel,todayK=keyOf(new Date()),past=k<todayK,full=dayBlock(k),dow=new Date(k+"T00:00").getDay();
+  const bks=bookingsOn(k);
+  const times=[...new Set([...SLOT_TIMES,...bks.map(b=>time5(b.booking_time))])].sort();
+  const rows=times.map(t=>{
+    const bk=bks.find(b=>time5(b.booking_time)===t&&isSale(b))||bks.find(b=>time5(b.booking_time)===t);
+    const sb_=slotBlock(k,t);
+    if(bk){const dead=!isSale(bk);return`<div class="slotrow is-bk"><span class="t">${t}</span><div><span class="tag bk">${dead?STATUS[bk.status]:"Agendado"}</span> <b style="font-weight:500">${esc(bk.name)}</b><small>${esc(bk.style)}</small></div>
+      <div class="acts"><button class="btn wa-b sm" data-ag-notify="${esc(bk.id)}">${WA_ICON}Avisar</button></div></div>`}
+    if(full)return`<div class="slotrow is-blk"><span class="t">${t}</span><div><span class="tag blk">Bloqueado (dia todo)</span></div><div></div></div>`;
+    if(sb_)return`<div class="slotrow is-blk"><span class="t">${t}</span><div><span class="tag blk">Bloqueado</span>${sb_.reason?`<small>${esc(sb_.reason)}</small>`:""}</div>
+      <div class="acts">${past?"":`<button class="btn ghost sm" data-unblk="${esc(sb_.id)}">Liberar</button>`}</div></div>`;
+    return`<div class="slotrow"><span class="t">${t}</span><div><span class="tag free">Livre</span></div>
+      <div class="acts">${past?"":`<button class="btn danger sm" data-blk="${t}">Bloquear</button>`}</div></div>`;
+  }).join("");
+  const hasBk=bks.filter(isSale).length;
+  box.innerHTML=`<h3>${fmtDayW(k)} ${CLOSED_DAYS.includes(dow)?`<small>(dia normalmente fechado)</small>`:""}</h3>
+    ${past?`<div class="warnbox" style="margin-bottom:10px">Dia que já passou — somente consulta.</div>`:`
+    <div class="toolbar" style="margin-bottom:12px">
+      <input class="inp sm" id="agReason" placeholder="Motivo (só você vê)" style="flex:1">
+      ${full?`<button class="btn sm" data-dayact="free">Liberar dia</button>`:`<button class="btn danger sm" data-dayact="block">Bloquear dia inteiro</button>`}
+    </div>`}
+    ${full?`<div class="warnbox" style="margin-bottom:10px"><b>Dia bloqueado.</b> A cliente não consegue agendar nele no site.${full.reason?` Motivo: ${esc(full.reason)}.`:""}${hasBk?` Já existem <b>${hasBk}</b> agendamento(s) — use <b>Avisar</b> para falar com elas.`:""}</div>`:""}
+    ${rows}`;
+}
+function renderBlockList(){
+  const todayK=keyOf(new Date()),list=BLOCKS.filter(b=>b.block_date>=todayK).sort((a,b)=>(a.block_date+(a.block_time||"")).localeCompare(b.block_date+(b.block_time||"")));
+  $("blkCount").textContent=list.length?list.length+" ativo(s)":"";
+  $("blkList").innerHTML=list.length?list.map(b=>`<div><span><b style="font-weight:500">${fmtDayW(b.block_date)}</b> · ${b.block_time?b.block_time:"dia inteiro"}${b.reason?`<br><small>${esc(b.reason)}</small>`:""}</span><button class="btn ghost sm" data-unblk="${esc(b.id)}" title="Liberar">✕</button></div>`).join(""):`<div class="empty" style="padding:18px">Nenhum bloqueio.</div>`;
+}
+$("agGrid").addEventListener("click",e=>{const b=e.target.closest(".cd");if(!b)return;agSel=b.dataset.k;renderAgenda()});
+$("agPrev").onclick=()=>{AG.m--;if(AG.m<0){AG.m=11;AG.y--}renderAgenda()};
+$("agNext").onclick=()=>{AG.m++;if(AG.m>11){AG.m=0;AG.y++}renderAgenda()};
+$("agDetail").addEventListener("click",async e=>{
+  const reason=$("agReason")?.value.trim()||"";
+  const nb=e.target.closest("[data-ag-notify]");
+  if(nb){const b=ALL.find(x=>x.id===nb.dataset.agNotify);if(b)openNotify({name:b.name,phone:b.phone,booking:b});return}
+  const bt=e.target.closest("[data-blk]");
+  if(bt){if(await addBlock(agSel,bt.dataset.blk,reason))toast(`🔒 ${bt.dataset.blk} bloqueado em ${fmtDay(agSel)}`);renderAgenda();return}
+  const ub=e.target.closest("[data-unblk]");
+  if(ub){if(await delBlocks([ub.dataset.unblk]))toast("Horário liberado ✓");renderAgenda();return}
+  const da=e.target.closest("[data-dayact]");
+  if(!da)return;
+  if(da.dataset.dayact==="block"){
+    const n=bookingsOn(agSel).filter(isSale).length;
+    if(n&&!confirm(`Já existem ${n} agendamento(s) em ${fmtDay(agSel)}.\nEles NÃO serão cancelados — depois use "Avisar" para falar com cada cliente.\n\nBloquear o dia mesmo assim?`))return;
+    if(await addBlock(agSel,null,reason))toast(`🔒 ${fmtDay(agSel)} bloqueado${n?` — avise as ${n} cliente(s) agendada(s)`:""}`);
+  }else{
+    if(await delBlocks(BLOCKS.filter(b=>b.block_date===agSel).map(b=>b.id)))toast(`${fmtDay(agSel)} liberado ✓`);
+  }
+  renderAgenda();
+});
+$("blkList").addEventListener("click",async e=>{
+  const ub=e.target.closest("[data-unblk]");if(!ub)return;
+  if(await delBlocks([ub.dataset.unblk]))toast("Bloqueio removido ✓");renderAgenda();
+});
+$("rgBtn").onclick=async()=>{
+  const a=$("rgFrom").value,b=$("rgTo").value||a,reason=$("rgReason").value.trim();
+  if(!a)return toast("Escolha a data inicial.");
+  if(b<a)return toast("A data final precisa ser depois da inicial.");
+  const days=[];for(let d=new Date(a+"T00:00");keyOf(d)<=b;d.setDate(d.getDate()+1)){if(days.length>90)return toast("Máximo de 90 dias por vez.");days.push(keyOf(d))}
+  const todo=days.filter(k=>k>=keyOf(new Date())&&!CLOSED_DAYS.includes(new Date(k+"T00:00").getDay())&&!dayBlock(k));
+  if(!todo.length)return toast("Nada novo para bloquear nesse período.");
+  const aff=ALL.filter(x=>isSale(x)&&todo.includes(x.booking_date)).length;
+  if(aff&&!confirm(`Há ${aff} agendamento(s) nesse período. Eles não serão cancelados — avise cada cliente depois.\n\nBloquear ${todo.length} dia(s)?`))return;
+  let ok=0;for(const k of todo)if(await addBlock(k,null,reason))ok++;
+  toast(`🔒 ${ok} dia(s) bloqueado(s)${aff?` — avise as ${aff} cliente(s) agendada(s)`:""}`);
+  $("rgFrom").value=$("rgTo").value=$("rgReason").value="";renderAgenda();
+};
+
+/* ============ AVISAR CLIENTE (WhatsApp) ============ */
+let NF=null;
+function nextBooking(key){
+  const t=keyOf(new Date());
+  return ALL.filter(b=>(digits(b.phone)||b.name)===key&&b.booking_date>=t&&isSale(b)).sort((a,b)=>(a.booking_date+time5(a.booking_time)).localeCompare(b.booking_date+time5(b.booking_time)))[0];
+}
+function tplText(id){
+  const f=String(NF.name||"").trim().split(" ")[0]||"",b=NF.booking;
+  const when=b?`${fmtDay(b.booking_date)} às ${time5(b.booking_time)}`:"";
+  const hi=`Olá, ${f}! Aqui é da Larissa Amorim Lash Academy 💛\n\n`;
+  return{
+    blank:hi,
+    imprevisto:hi+`Infelizmente tive um imprevisto e preciso remarcar seu atendimento${when?` de ${when}`:""}. Sinto muito pelo transtorno! Podemos combinar um novo dia e horário? Me diga qual fica melhor para você.`,
+    atraso:hi+`Estou com um pequeno atraso e ${when?`seu atendimento de ${when}`:"o seu atendimento"} vai começar um pouquinho mais tarde. Peço desculpas e agradeço a compreensão!`,
+    lembrete:hi+`Passando para lembrar do seu horário${when?` em ${when}`:""} ✨ Te espero!`
+  }[id];
+}
+function openNotify(c){
+  NF={name:c.name,phone:c.phone,booking:c.booking||(c.key?nextBooking(c.key):null)};
+  const b=NF.booking;
+  $("nfWho").innerHTML=`<b style="color:var(--ink);font-weight:500">${esc(c.name)}</b> · ${esc(fmtPhone(c.phone))}${b?`<br>Próximo horário: ${fmtDayW(b.booking_date)} às ${time5(b.booking_time)} · ${esc(b.style)}`:""}`;
+  $("nfText").value=tplText("blank");$("nfErr").textContent="";
+  $("nfModal").hidden=false;setTimeout(()=>{const t=$("nfText");t.focus();t.setSelectionRange(t.value.length,t.value.length)},50);
+}
+const closeNotify=()=>{$("nfModal").hidden=true;NF=null};
+$("nfChips").addEventListener("click",e=>{const b=e.target.closest("[data-tpl]");if(!b||!NF)return;
+  if($("nfText").value.trim()&&$("nfText").value!==tplText("blank")&&!confirm("Substituir o texto atual pelo modelo?"))return;
+  $("nfText").value=tplText(b.dataset.tpl)});
+$("nfCancel").onclick=closeNotify;
+$("nfModal").addEventListener("click",e=>{if(e.target.id==="nfModal")closeNotify()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("nfModal").hidden)closeNotify()});
+$("nfSend").onclick=()=>{
+  const txt=$("nfText").value.trim(),d=digits(NF?.phone);
+  if(d.length<10)return $("nfErr").textContent="Telefone da cliente parece incompleto.";
+  if(!txt)return $("nfErr").textContent="Escreva a mensagem antes de enviar.";
+  window.open(`https://wa.me/${waNum(NF.phone)}?text=${encodeURIComponent(txt)}`,"_blank","noopener");
+  closeNotify();
+};
+$("clientsBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-notify]");if(!b)return;
+  const c=CLIENTS[b.dataset.notify];if(c)openNotify({name:c.name,phone:c.phone,key:c.key});
+});
 
 /* ============ UI ============ */
 function go(t){document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
