@@ -169,6 +169,20 @@ td.num,th.num{text-align:right;white-space:nowrap}
 textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
 .modal-card .hint{color:var(--dim);font-size:.75rem;margin-top:8px}
 .modal-card .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+/* AGENDAMENTO EXCLUSIVO */
+.tag.exc{color:var(--gold2);border-color:#6b5320}
+.slotrow.is-exc{border-color:#6b5320}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px}
+.fgrid .field{margin-bottom:0;min-width:0}
+.fgrid .field input,.fgrid .field select{width:100%}
+.fgrid .full{grid-column:1/-1}
+.fgrid .chips{margin:-4px 0 0}
+@media(max-width:480px){.fgrid{grid-template-columns:1fr}}
+.chips button.on{border-color:var(--gold);color:var(--gold2)}
+.chips button:disabled{opacity:.4;cursor:not-allowed}
+#exModal input,#exModal select{color-scheme:dark}
+.ex-also{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:.82rem;color:var(--mut);cursor:pointer}
+.ex-also input{margin-top:3px;accent-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -213,9 +227,6 @@ textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
     <button data-t="clients">Clientes<span class="count" id="cClients">0</span></button>
     <button data-t="daily">Vendas por dia</button>
     <button data-t="models">Modelos & preços</button>
-    <button data-t="broadcast">Disparo WhatsApp</button>
-    <button data-t="promos">Avisos no site</button>
-    <button data-t="system">Sistema</button>
   </nav>
 
   <main>
@@ -257,7 +268,7 @@ textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
             <button class="btn ghost sm" id="agNext">›</button>
           </div>
           <div class="ag-grid" id="agGrid"></div>
-          <p style="color:var(--dim);font-size:.75rem;margin-top:10px">Toque em um dia para ver os horários. Dias em vermelho estão bloqueados no site; cinza = fechado (dom/seg).</p>
+          <p style="color:var(--dim);font-size:.75rem;margin-top:10px">Toque em um dia para ver os horários. Dias em vermelho estão bloqueados no site; cinza = fechado (dom/seg). Use <b>＋ Agendamento exclusivo</b> para registrar a cliente que fechou direto com você.</p>
         </div>
         <div>
           <div class="box" id="agDetail" style="margin-bottom:14px"></div>
@@ -277,52 +288,6 @@ textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
     </section>
 
     <!-- CLIENTES -->
-    <section class="panel" id="p-broadcast">
-      <div class="box" style="margin-bottom:14px">
-        <h3>Disparo por WhatsApp <small>promoções e datas comemorativas</small></h3>
-        <p style="color:var(--mut);font-size:.85rem;margin-bottom:10px">Envia para todas as clientes que deixaram telefone (cada número uma única vez). Use <b>{nome}</b> para colocar o primeiro nome da cliente.</p>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="bcChips">
-          <button class="btn ghost sm" data-bc="promo">🏷 Promoção</button>
-          <button class="btn ghost sm" data-bc="mulher">🌷 Dia da Mulher</button>
-          <button class="btn ghost sm" data-bc="maes">💐 Dia das Mães</button>
-          <button class="btn ghost sm" data-bc="namorados">💘 Dia dos Namorados</button>
-          <button class="btn ghost sm" data-bc="black">🖤 Black Friday</button>
-          <button class="btn ghost sm" data-bc="natal">🎄 Natal</button>
-          <button class="btn ghost sm" data-bc="ano">🎆 Ano Novo</button>
-        </div>
-        <textarea class="inp" id="bcText" style="width:100%;min-height:150px" placeholder="Escreva a mensagem… (use {nome})"></textarea>
-        <div class="toolbar" style="margin-top:12px">
-          <span id="bcCount" style="color:var(--mut);font-size:.85rem"></span>
-          <span style="flex:1"></span>
-          <button class="btn" id="bcStart">Iniciar disparo</button>
-        </div>
-      </div>
-      <div class="box" id="bcRun" hidden></div>
-    </section>
-
-    <section class="panel" id="p-promos">
-      <div class="box" style="margin-bottom:14px">
-        <h3>Aviso de promoção no site <small>fica visível por 3 dias e some sozinho</small></h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <input class="inp" id="prTitle" maxlength="60" placeholder="Título (ex.: Promoção de Natal 🎄)">
-          <textarea class="inp" id="prMsg" maxlength="240" style="min-height:90px" placeholder="Mensagem (ex.: 15% de desconto em todos os modelos até sexta!)"></textarea>
-          <div class="toolbar" style="margin:0"><span style="color:var(--mut);font-size:.8rem">Duração: 3 dias a partir de agora</span><span style="flex:1"></span><button class="btn" id="prPublish">Publicar no site</button></div>
-        </div>
-      </div>
-      <div class="box"><h3>Avisos publicados <small id="prCount"></small></h3><div class="blklist" id="prList"></div></div>
-    </section>
-
-    <section class="panel" id="p-system">
-      <div class="box">
-        <h3>Zerar dados para começar do zero</h3>
-        <p style="color:var(--mut);font-size:.85rem;margin:6px 0 12px">Apaga <b>todos os agendamentos, o faturamento e os bloqueios de agenda</b>. A tabela de preços dos modelos e os avisos de promoção são mantidos. Não dá para desfazer.</p>
-        <div class="toolbar" style="margin:0">
-          <input class="inp sm" id="resetConfirm" placeholder="Digite ZERAR para confirmar">
-          <button class="btn danger sm" id="resetBtn">Zerar tudo</button>
-        </div>
-      </div>
-    </section>
-
     <section class="panel" id="p-clients">
       <div class="toolbar"><input class="inp sm" id="qc" placeholder="Buscar cliente…"></div>
       <div class="tw"><table>
@@ -379,6 +344,27 @@ textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
     <div class="row"><button class="btn ghost" id="nfCancel">Cancelar</button><button class="btn" id="nfSend">Abrir no WhatsApp</button></div>
   </div>
 </div>
+<div class="modal" id="exModal" hidden>
+  <form class="modal-card" id="exForm" autocomplete="off" novalidate>
+    <h3>Agendamento exclusivo</h3>
+    <div class="who">Para a cliente que fechou direto com você. Ocupa o horário no site e entra no faturamento.</div>
+    <div class="fgrid">
+      <label class="field full">Nome da cliente<input id="exName" maxlength="80"></label>
+      <label class="field">Data<input type="date" id="exDate"></label>
+      <label class="field">Horário<input type="time" id="exTime"></label>
+      <div class="chips full" id="exSlots"></div>
+      <label class="field">Modelo de cílios<select class="inp" id="exModel"></select></label>
+      <label class="field">Valor (R$)<input type="number" id="exPrice" step="0.01" min="0" inputmode="decimal" placeholder="0,00"></label>
+      <label class="field full" id="exOtherWrap" hidden>Nome do modelo<input id="exOther" maxlength="60"></label>
+      <label class="field">WhatsApp (opcional)<input id="exPhone" inputmode="tel" placeholder="(79) 99999-9999"></label>
+      <label class="field">Status<select class="inp" id="exStatus"><option value="confirmado">Confirmado</option><option value="concluido">Concluído</option><option value="pendente">Pendente</option></select></label>
+      <label class="field full">Anotação (opcional)<input id="exNote" maxlength="200"></label>
+    </div>
+    <label class="ex-also" id="exAlsoWrap" hidden><input type="checkbox" id="exAlso" checked><span id="exAlsoTxt"></span></label>
+    <div class="err" id="exErr"></div>
+    <div class="row"><button type="button" class="btn ghost" id="exCancel">Cancelar</button><button type="submit" class="btn" id="exSave">Salvar agendamento</button></div>
+  </form>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -392,10 +378,8 @@ const PALETTE = ["#F5D867","#E3B640","#C8961E","#FFE9A8","#B8861C","#E8CF8A","#9
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* >>> Mantenha igual ao site (index.html): horários e dias fechados <<< */
-const SLOTS_WEEK=["09:00","10:10","11:20","12:30","13:40","14:50","16:00","17:10","18:20","19:30"]; // segunda a sexta
-const SLOTS_SAT=["09:00","10:10","11:20","12:30","13:40","14:50","16:00","17:10","18:20"]; // sábado
-const CLOSED_DAYS=[0]; // domingo
-const slotsFor=dow=>dow===6?SLOTS_SAT:SLOTS_WEEK;
+const SLOT_TIMES=["09:00","11:00","13:00","15:00","17:00"];
+const CLOSED_DAYS=[0,1]; // domingo, segunda
 const MONTHS=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 let BLOCKS=[], CLIENTS={}, AG={y:new Date().getFullYear(),m:new Date().getMonth()}, agSel=null;
 let ALL=[], PRICES=[], period="30", basis="pedido", charts={}, channel=null, justAdded=new Set();
@@ -451,7 +435,7 @@ async function boot(){
   if(error||!ok){await sb.auth.signOut();$("login").hidden=false;$("app").hidden=true;
     $("loginErr").textContent=error?"Rode o arquivo admin-setup.sql no Supabase primeiro.":"Este usuário não tem acesso de administrador.";return}
   $("login").hidden=true;$("app").hidden=false;
-  await Promise.all([loadBookings(),loadPrices(),loadBlocks(),loadPromos()]);
+  await Promise.all([loadBookings(),loadPrices(),loadBlocks()]);
   fillFilters();renderAll();subscribe();
 }
 
@@ -473,7 +457,10 @@ function subscribe(){
   channel=sb.channel("admin-bookings")
     .on("postgres_changes",{event:"*",schema:"public",table:"bookings"},p=>{
       if(p.eventType==="INSERT"){
-        ALL.unshift({...p.new,status:p.new.status||"pendente"});justAdded.add(p.new.id);
+        if(ALL.some(x=>x.id===p.new.id))return;
+        ALL.unshift({...p.new,status:p.new.status||"pendente"});
+        if(PENDING_EXC.has(`${p.new.booking_date}|${time5(p.new.booking_time)}|${p.new.name}`)){fillFilters();renderAll();return}
+        justAdded.add(p.new.id);
         toast(`✨ <b>Novo pedido</b><br>${esc(p.new.name)} · ${esc(p.new.style)}<br><span class="gold-text">${p.new.price!=null?brl(p.new.price):"sem preço"}</span> · ${fmtDay(p.new.booking_date)} às ${time5(p.new.booking_time)}`);
         try{new Audio("data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAACAgICAgICAgICAgICAgICAgICAgP+AAP+AAP+AAP+AAP+AAP+AAP+AAP+AgICAgA==").play()}catch(e){}
       }else if(p.eventType==="UPDATE"){const i=ALL.findIndex(x=>x.id===p.new.id);if(i>=0)ALL[i]={...ALL[i],...p.new}}
@@ -489,7 +476,7 @@ async function updateBooking(id,patch){
 }
 
 /* ============ RENDER ============ */
-function renderAll(){renderBroadcast();renderMissing();renderOverview();renderOrders();renderAgenda();renderClients();renderDaily();renderModels()}
+function renderAll(){renderMissing();renderOverview();renderOrders();renderAgenda();renderClients();renderDaily();renderModels()}
 
 function renderMissing(){
   const miss={};ALL.filter(b=>b.price==null&&isSale(b)).forEach(b=>miss[b.style||"—"]=(miss[b.style||"—"]||0)+1);
@@ -501,7 +488,7 @@ function renderOverview(){
   const list=inPeriod(),sales=list.filter(isSale);
   const rev=sales.reduce((s,b)=>s+(Number(b.price)||0),0);
   const done=list.filter(b=>b.status==="concluido"),doneRev=done.reduce((s,b)=>s+(Number(b.price)||0),0);
-  const cli=new Set(sales.map(b=>digits(b.phone))).size;
+  const cli=new Set(sales.map(b=>digits(b.phone)||b.name)).size;
   const top=modelStats(list)[0];
   const t=keyOf(new Date());const todayRev=ALL.filter(b=>isSale(b)&&dayOf(b)===t).reduce((s,b)=>s+(Number(b.price)||0),0);
   $("kpis").innerHTML=`
@@ -566,7 +553,7 @@ function renderOrders(){
       <td style="white-space:nowrap">${fmtDT(b.created_at)}</td>
       <td style="white-space:nowrap"><b style="font-weight:500">${fmtDayW(b.booking_date)}</b><br><small style="color:var(--dim)">${time5(b.booking_time)}</small></td>
       <td class="cli"><b>${esc(b.name)}</b></td>
-      <td><a class="wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(b.phone)}?text=${msg}">${WA_ICON}${esc(fmtPhone(b.phone))}</a></td>
+      <td>${hasPhone(b.phone)?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(b.phone)}?text=${msg}">${WA_ICON}${esc(fmtPhone(b.phone))}</a>`:NO_PHONE}</td>
       <td><span class="pill">${esc(b.style)}</span></td>
       <td class="num"><input class="price-in ${b.price==null?"missing":""}" type="number" step="0.01" value="${b.price??""}" placeholder="—" data-f="price"></td>
       <td><select class="st" data-s="${b.status}" data-f="status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===b.status?"selected":""}>${v}</option>`).join("")}</select></td>
@@ -585,13 +572,15 @@ $("ordersBody").addEventListener("click",async e=>{
   if(!confirm(`Excluir o pedido de ${b.name} (${fmtDay(b.booking_date)} ${time5(b.booking_time)})?\nO horário volta a ficar livre no site.`))return;
   const{error}=await sb.from("bookings").delete().eq("id",id);
   if(error)return toast("Não excluiu: "+esc(error.message));
-  ALL=ALL.filter(x=>x.id!==id);renderAll();
+  ALL=ALL.filter(x=>x.id!==id);
+  if(isExc(b))await delBlocks(excBlocks(b).map(x=>x.id));
+  renderAll();
 });
 ["q","fStatus","fModel"].forEach(i=>$(i).addEventListener("input",renderOrders));
 
 function renderClients(){
   const q=$("qc").value.toLowerCase().trim(),m={};
-  ALL.forEach(b=>{const k=digits(b.phone)||b.name;const c=m[k]=m[k]||{key:k,name:b.name,phone:b.phone,n:0,rev:0,models:{},last:"",first:b.created_at};
+  ALL.forEach(b=>{const k=digits(b.phone)||b.name;const c=m[k]=m[k]||{key:k,name:b.name,phone:b.phone||"",n:0,rev:0,models:{},last:"",first:b.created_at};
     if(isSale(b)){c.n++;c.rev+=Number(b.price)||0;c.models[b.style]=(c.models[b.style]||0)+1}
     if((b.booking_date||"")>c.last){c.last=b.booking_date;c.name=b.name}
     if(b.created_at&&(!c.first||b.created_at<c.first))c.first=b.created_at});
@@ -599,9 +588,9 @@ function renderClients(){
   CLIENTS=m;$("cClients").textContent=Object.keys(m).length;
   $("clientsBody").innerHTML=list.length?list.map(c=>{const fav=Object.entries(c.models).sort((a,b)=>b[1]-a[1])[0];
     return`<tr><td class="cli"><b>${esc(c.name)}</b>${c.n>1?`<small>cliente recorrente</small>`:""}</td>
-      <td><a class="wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">${WA_ICON}${esc(fmtPhone(c.phone))}</a></td>
+      <td>${hasPhone(c.phone)?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">${WA_ICON}${esc(fmtPhone(c.phone))}</a>`:NO_PHONE}</td>
       <td class="num">${c.n}</td><td class="num money">${brl(c.rev)}</td><td>${fav?esc(fav[0]):"—"}</td><td>${fmtDay(c.last)}</td><td>${fmtDT(c.first)}</td>
-       <td><button class="btn wa-b sm" data-notify="${esc(c.key)}" title="Enviar mensagem de aviso pelo WhatsApp">${WA_ICON}Avisar</button></td></tr>`}).join(""):`<tr><td colspan="8" class="empty">Nenhum cliente</td></tr>`;
+       <td>${hasPhone(c.phone)?`<button class="btn wa-b sm" data-notify="${esc(c.key)}" title="Enviar mensagem de aviso pelo WhatsApp">${WA_ICON}Avisar</button>`:""}</td></tr>`}).join(""):`<tr><td colspan="8" class="empty">Nenhum cliente</td></tr>`;
 }
 $("qc").addEventListener("input",renderClients);
 
@@ -691,24 +680,24 @@ function renderAgenda(){
 }
 function renderAgendaDay(){
   const box=$("agDetail");
-  if(!agSel){box.innerHTML=`<h3>Horários do dia</h3><div class="empty" style="padding:24px">Selecione um dia no calendário.</div>`;return}
+  if(!agSel){box.innerHTML=`<div class="ag-head" style="flex-wrap:wrap"><h3 style="margin:0">Horários do dia</h3>${EX_BTN}</div><div class="empty" style="padding:24px">Selecione um dia no calendário.</div>`;return}
   const k=agSel,todayK=keyOf(new Date()),past=k<todayK,full=dayBlock(k),dow=new Date(k+"T00:00").getDay();
   const bks=bookingsOn(k);
-  const times=[...new Set([...slotsFor(dow),...bks.map(b=>time5(b.booking_time))])].sort();
+  const times=[...new Set([...SLOT_TIMES,...bks.map(b=>time5(b.booking_time))])].sort();
   const rows=times.map(t=>{
     const bk=bks.find(b=>time5(b.booking_time)===t&&isSale(b))||bks.find(b=>time5(b.booking_time)===t);
     const sb_=slotBlock(k,t);
-    if(bk){const dead=!isSale(bk);return`<div class="slotrow is-bk"><span class="t">${t}</span><div><span class="tag bk">${dead?STATUS[bk.status]:"Agendado"}</span> <b style="font-weight:500">${esc(bk.name)}</b><small>${esc(bk.style)}</small></div>
-      <div class="acts"><button class="btn wa-b sm" data-ag-notify="${esc(bk.id)}">${WA_ICON}Avisar</button></div></div>`}
+    if(bk){const dead=!isSale(bk),exc=isExc(bk);return`<div class="slotrow ${exc?"is-exc":"is-bk"}"><span class="t">${t}</span><div><span class="tag ${exc&&!dead?"exc":"bk"}">${dead?STATUS[bk.status]:exc?"Exclusivo":"Agendado"}</span> <b style="font-weight:500">${esc(bk.name)}</b><small>${esc(bk.style)}${bk.price!=null?" · "+brl(bk.price):""}</small></div>
+      <div class="acts">${hasPhone(bk.phone)?`<button class="btn wa-b sm" data-ag-notify="${esc(bk.id)}">${WA_ICON}Avisar</button>`:""}${exc?`<button class="btn danger sm" data-exdel="${esc(bk.id)}" title="Excluir e liberar o horário">✕</button>`:""}</div></div>`}
     if(full)return`<div class="slotrow is-blk"><span class="t">${t}</span><div><span class="tag blk">Bloqueado (dia todo)</span></div><div></div></div>`;
     if(sb_)return`<div class="slotrow is-blk"><span class="t">${t}</span><div><span class="tag blk">Bloqueado</span>${sb_.reason?`<small>${esc(sb_.reason)}</small>`:""}</div>
       <div class="acts">${past?"":`<button class="btn ghost sm" data-unblk="${esc(sb_.id)}">Liberar</button>`}</div></div>`;
     return`<div class="slotrow"><span class="t">${t}</span><div><span class="tag free">Livre</span></div>
-      <div class="acts">${past?"":`<button class="btn danger sm" data-blk="${t}">Bloquear</button>`}</div></div>`;
+      <div class="acts">${past?"":`<button class="btn ghost sm" data-exnew="${t}">Agendar</button><button class="btn danger sm" data-blk="${t}">Bloquear</button>`}</div></div>`;
   }).join("");
   const hasBk=bks.filter(isSale).length;
-  box.innerHTML=`<h3>${fmtDayW(k)} ${CLOSED_DAYS.includes(dow)?`<small>(dia normalmente fechado)</small>`:""}</h3>
-    ${past?`<div class="warnbox" style="margin-bottom:10px">Dia que já passou — somente consulta.</div>`:`
+  box.innerHTML=`<div class="ag-head" style="flex-wrap:wrap"><h3 style="margin:0">${fmtDayW(k)} ${CLOSED_DAYS.includes(dow)?`<small>(dia normalmente fechado)</small>`:""}</h3>${EX_BTN}</div>
+    ${past?`<div class="warnbox" style="margin-bottom:10px">Dia que já passou — os bloqueios ficam só para consulta. Você ainda pode registrar um atendimento exclusivo feito nesse dia.</div>`:`
     <div class="toolbar" style="margin-bottom:12px">
       <input class="inp sm" id="agReason" placeholder="Motivo (só você vê)" style="flex:1">
       ${full?`<button class="btn sm" data-dayact="free">Liberar dia</button>`:`<button class="btn danger sm" data-dayact="block">Bloquear dia inteiro</button>`}
@@ -726,6 +715,10 @@ $("agPrev").onclick=()=>{AG.m--;if(AG.m<0){AG.m=11;AG.y--}renderAgenda()};
 $("agNext").onclick=()=>{AG.m++;if(AG.m>11){AG.m=0;AG.y++}renderAgenda()};
 $("agDetail").addEventListener("click",async e=>{
   const reason=$("agReason")?.value.trim()||"";
+  const ex=e.target.closest("[data-exnew]");
+  if(ex){openExc(agSel,ex.dataset.exnew||"");return}
+  const xd=e.target.closest("[data-exdel]");
+  if(xd){await delExc(xd.dataset.exdel);return}
   const nb=e.target.closest("[data-ag-notify]");
   if(nb){const b=ALL.find(x=>x.id===nb.dataset.agNotify);if(b)openNotify({name:b.name,phone:b.phone,booking:b});return}
   const bt=e.target.closest("[data-blk]");
@@ -760,6 +753,106 @@ $("rgBtn").onclick=async()=>{
   toast(`🔒 ${ok} dia(s) bloqueado(s)${aff?` — avise as ${aff} cliente(s) agendada(s)`:""}`);
   $("rgFrom").value=$("rgTo").value=$("rgReason").value="";renderAgenda();
 };
+
+/* ============ AGENDAMENTO EXCLUSIVO (registro manual) ============ */
+/* Grava na mesma tabela `bookings` do site: ocupa o horário e soma em todo o financeiro. */
+const EXC_TAG="⭐ Exclusivo";
+const EX_BTN=`<button class="btn sm" data-exnew="">＋ Agendamento exclusivo</button>`;
+const NO_PHONE=`<span style="color:var(--dim)">—</span>`;
+const PENDING_EXC=new Set();
+const hasPhone=p=>digits(p).length>=10;
+const isExc=b=>String(b.notes||"").startsWith(EXC_TAG);
+const excReason=n=>`Exclusivo · ${n}`;
+const excBlocks=b=>BLOCKS.filter(x=>x.block_date===b.booking_date&&x.block_time&&x.reason===excReason(b.name));
+const mins=t=>{const[h,m]=String(t||"").split(":").map(Number);return h*60+m};
+const SLOT_GAP=SLOT_TIMES.length>1?Math.min(...SLOT_TIMES.slice(1).map((t,i)=>mins(t)-mins(SLOT_TIMES[i]))):120;
+const normM=s=>String(s||"").toLowerCase().trim();
+const priceOf=st=>PRICES.find(p=>normM(p.model)===normM(st)||(p.aliases||[]).some(a=>normM(a)===normM(st)));
+let exStatusTouched=false;
+
+/* horários do site que encostam num horário fora da grade (ex.: 10:00 pega 09:00 e 11:00) */
+function exNeighbors(k,t){
+  if(!k||!t||k<keyOf(new Date())||dayBlock(k))return[];
+  const tm=mins(t),bks=bookingsOn(k).filter(isSale);
+  return SLOT_TIMES.filter(s=>s!==t&&Math.abs(mins(s)-tm)<SLOT_GAP&&!slotBlock(k,s)&&!bks.some(b=>time5(b.booking_time)===s));
+}
+function exRefresh(){
+  const k=$("exDate").value,t=$("exTime").value;
+  const bks=k?bookingsOn(k).filter(isSale):[];
+  $("exSlots").innerHTML=k?SLOT_TIMES.map(s=>{const busy=bks.some(b=>time5(b.booking_time)===s);
+    return`<button type="button" data-t="${s}" class="${s===t?"on":""}" ${busy?"disabled":""}>${s}${busy?" · ocupado":""}</button>`}).join(""):"";
+  const nb=exNeighbors(k,t);
+  $("exAlsoWrap").hidden=!nb.length;
+  $("exAlsoTxt").textContent=nb.length?`Bloquear também no site ${nb.length>1?"os horários":"o horário"} ${nb.join(" e ")}, que ${nb.length>1?"encostam":"encosta"} nesse atendimento`:"";
+  if(!exStatusTouched)$("exStatus").value=k&&k<keyOf(new Date())?"concluido":"confirmado";
+}
+function openExc(date,time){
+  $("exForm").reset();exStatusTouched=false;
+  $("exDate").value=date||keyOf(new Date());$("exTime").value=time||"";
+  $("exModel").innerHTML=`<option value="">Selecione…</option>`+PRICES.map(p=>`<option value="${esc(p.model)}">${esc(p.model)} · ${brl(p.price)}</option>`).join("")+`<option value="__other">Outro modelo…</option>`;
+  $("exOtherWrap").hidden=true;$("exErr").textContent="";
+  exRefresh();$("exModal").hidden=false;setTimeout(()=>$("exName").focus(),50);
+}
+const closeExc=()=>{$("exModal").hidden=true};
+function excErr(e){
+  if(e.code==="42501")return"O banco não deixou o painel criar o pedido. Rode o arquivo admin-exclusivo.sql no Supabase e tente de novo.";
+  if(e.code==="23505")return"Já existe um agendamento nesse dia e horário. Escolha outro horário ou exclua o pedido antigo.";
+  return"Não salvou: "+e.message;
+}
+async function delExc(id){
+  const b=ALL.find(x=>x.id===id);if(!b)return;
+  if(!confirm(`Excluir o agendamento exclusivo de ${b.name} (${fmtDay(b.booking_date)} ${time5(b.booking_time)})?\nO horário volta a ficar livre e o valor sai do faturamento.`))return;
+  const{error}=await sb.from("bookings").delete().eq("id",id);
+  if(error)return toast("Não excluiu: "+esc(error.message));
+  ALL=ALL.filter(x=>x.id!==id);
+  await delBlocks(excBlocks(b).map(x=>x.id));
+  fillFilters();renderAll();toast("Agendamento exclusivo excluído ✓");
+}
+$("exDate").addEventListener("change",exRefresh);
+$("exTime").addEventListener("input",exRefresh);
+$("exStatus").addEventListener("change",()=>{exStatusTouched=true});
+$("exSlots").addEventListener("click",e=>{const b=e.target.closest("[data-t]");if(!b||b.disabled)return;$("exTime").value=b.dataset.t;exRefresh()});
+$("exModel").addEventListener("change",()=>{
+  const v=$("exModel").value,other=v==="__other";$("exOtherWrap").hidden=!other;
+  if(other){$("exPrice").value="";$("exOther").focus()}else{const p=priceOf(v);$("exPrice").value=p?p.price:""}
+});
+$("exCancel").onclick=closeExc;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("exModal").hidden)closeExc()});
+$("exForm").addEventListener("submit",async e=>{
+  e.preventDefault();const err=$("exErr");err.textContent="";
+  const name=$("exName").value.trim().replace(/\s+/g," "),k=$("exDate").value,t=$("exTime").value;
+  const sel=$("exModel").value,style=sel==="__other"?$("exOther").value.trim():sel;
+  const pv=$("exPrice").value,price=pv===""?null:Number(pv);
+  const phone=digits($("exPhone").value),note=$("exNote").value.trim(),status=$("exStatus").value;
+  if(!name)return err.textContent="Informe o nome da cliente.";
+  if(!k)return err.textContent="Escolha a data.";
+  if(!t)return err.textContent="Escolha o horário.";
+  if(!style)return err.textContent="Escolha o modelo de cílios.";
+  if(price!=null&&(isNaN(price)||price<0))return err.textContent="Valor inválido.";
+  if(phone&&phone.length<10)return err.textContent="WhatsApp incompleto — deixe em branco se não tiver.";
+  const near=bookingsOn(k).filter(b=>isSale(b)&&Math.abs(mins(time5(b.booking_time))-mins(t))<SLOT_GAP);
+  if(near.length&&!confirm(`Atenção: já existe agendamento perto desse horário em ${fmtDay(k)}:\n${near.map(b=>`• ${time5(b.booking_time)} ${b.name}`).join("\n")}\n\nSalvar mesmo assim?`))return;
+  if(price==null&&!confirm("Sem valor informado, este atendimento não entra no faturamento.\nSalvar assim mesmo?"))return;
+  const btn=$("exSave");btn.disabled=true;btn.textContent="Salvando…";
+  const alsoBlock=!$("exAlsoWrap").hidden&&$("exAlso").checked;
+  const row={name,phone:phone||null,style,booking_date:k,booking_time:t,price,status,notes:EXC_TAG+(note?" — "+note:"")};
+  const pk=`${k}|${t}|${name}`;PENDING_EXC.add(pk);setTimeout(()=>PENDING_EXC.delete(pk),15000);
+  let{data,error}=await sb.from("bookings").insert(row).select().single();
+  if(error&&error.code==="23502"&&!row.phone){ /* coluna phone obrigatória no banco: grava vazio */
+    row.phone="";({data,error}=await sb.from("bookings").insert(row).select().single());
+  }
+  btn.disabled=false;btn.textContent="Salvar agendamento";
+  if(error){PENDING_EXC.delete(pk);err.textContent=excErr(error);return}
+  /* se algum gatilho do banco trocou o valor pelo da tabela, vale o que foi digitado aqui */
+  if(price!=null&&Number(data.price)!==price){const u=await sb.from("bookings").update({price}).eq("id",data.id);if(!u.error)data.price=price}
+  const rec={...data,status:data.status||"pendente"},i=ALL.findIndex(x=>x.id===rec.id);
+  if(i>=0)ALL[i]={...ALL[i],...rec};else ALL.unshift(rec);
+  let nblk=0;
+  if(alsoBlock)for(const s of exNeighbors(k,t))if(await addBlock(k,s,excReason(name)))nblk++;
+  closeExc();agSel=k;const[y,m]=k.split("-").map(Number);AG={y,m:m-1};
+  fillFilters();renderAll();
+  toast(`⭐ <b>Agendamento exclusivo salvo</b><br>${esc(name)} · ${esc(style)}<br>${fmtDay(k)} às ${t}${price!=null?` · <span class="gold-text">${brl(price)}</span>`:""}${nblk?`<br>🔒 ${nblk} horário(s) vizinho(s) bloqueado(s) no site`:""}`);
+});
 
 /* ============ AVISAR CLIENTE (WhatsApp) ============ */
 let NF=null;
@@ -803,93 +896,6 @@ $("clientsBody").addEventListener("click",e=>{
   const b=e.target.closest("[data-notify]");if(!b)return;
   const c=CLIENTS[b.dataset.notify];if(c)openNotify({name:c.name,phone:c.phone,key:c.key});
 });
-
-/* ============ DISPARO WHATSAPP (todas as clientes) ============ */
-const BC_TPL={
-  promo:"Olá, {nome}! 💛 Aqui é da Larissa Amorim Lash Academy.\n\nTemos uma promoção especial para você: [descreva a promoção]. Válida até [data]! Garanta seu horário pelo site ✨",
-  mulher:"Olá, {nome}! 🌷 Feliz Dia da Mulher! A Larissa Amorim Lash Academy preparou uma condição especial para você: [descreva]. Venha se presentear com um olhar de destaque 💛",
-  maes:"Olá, {nome}! 💐 Feliz Dia das Mães! Na Larissa Amorim Lash Academy temos uma condição especial: [descreva]. Presenteie quem você ama (ou a você mesma) 💛",
-  namorados:"Olá, {nome}! 💘 Dia dos Namorados chegando! Garanta seu horário e fique com o olhar irresistível. Condição especial: [descreva] ✨",
-  black:"Olá, {nome}! 🖤 BLACK FRIDAY na Larissa Amorim Lash Academy! [descreva a oferta]. Vagas limitadas, agende pelo site ✨",
-  natal:"Olá, {nome}! 🎄 Feliz Natal! A Larissa Amorim Lash Academy deseja a você dias lindos. Para as festas, temos uma condição especial: [descreva] 💛",
-  ano:"Olá, {nome}! 🎆 Feliz Ano Novo! Comece o ano com o olhar renovado. Condição especial de início de ano: [descreva] ✨"
-};
-let BC={list:[],i:0,on:false};
-function bcClients(){
-  const m={};
-  ALL.forEach(b=>{if(digits(b.phone).length<10)return;const k=waNum(b.phone);
-    if(!m[k]||(b.created_at||"")>(m[k].t||""))m[k]={name:b.name,phone:b.phone,t:b.created_at||""}});
-  return Object.values(m);
-}
-function renderBroadcast(){const n=bcClients().length;$("bcCount").textContent=n?`${n} cliente(s) com telefone`:"Nenhuma cliente com telefone ainda";}
-const bcMsg=c=>$("bcText").value.replace(/\{nome\}/g,String(c.name||"").trim().split(" ")[0]||"");
-function bcShow(){
-  const box=$("bcRun");box.hidden=false;
-  if(!BC.on){box.innerHTML=`<h3>Disparo encerrado</h3><p style="color:var(--mut)">Enviadas: ${BC.i} de ${BC.list.length}.</p>`;return}
-  if(BC.i>=BC.list.length){BC.on=false;box.innerHTML=`<h3>✅ Disparo concluído</h3><p style="color:var(--mut)">Todas as ${BC.list.length} clientes foram abertas no WhatsApp.</p>`;return}
-  const c=BC.list[BC.i],pct=Math.round(BC.i/BC.list.length*100);
-  box.innerHTML=`<h3>Enviando ${BC.i+1} de ${BC.list.length}</h3>
-    <div class="rank-row" style="grid-template-columns:1fr;margin:8px 0 12px"><div class="bar"><i style="width:${pct}%"></i></div></div>
-    <p><b style="font-weight:500">${esc(c.name)}</b> · ${esc(fmtPhone(c.phone))}</p>
-    <p style="color:var(--mut);font-size:.82rem;margin:8px 0;white-space:pre-line">${esc(bcMsg(c))}</p>
-    <div class="toolbar" style="margin:10px 0 0"><button class="btn" data-bcact="send">${WA_ICON}Abrir WhatsApp e ir para a próxima</button><button class="btn ghost sm" data-bcact="skip">Pular</button><button class="btn danger sm" data-bcact="stop">Parar</button></div>
-    <p class="hint" style="color:var(--dim);font-size:.75rem;margin-top:8px">O WhatsApp abre com a mensagem pronta; é só tocar em enviar e voltar aqui.</p>`;
-}
-$("bcChips").addEventListener("click",e=>{const b=e.target.closest("[data-bc]");if(!b)return;
-  if($("bcText").value.trim()&&!confirm("Substituir o texto atual pelo modelo?"))return;$("bcText").value=BC_TPL[b.dataset.bc]});
-$("bcStart").onclick=()=>{
-  const txt=$("bcText").value.trim(),list=bcClients();
-  if(!txt)return toast("Escreva a mensagem antes.");
-  if(/\[[^\]]+\]/.test(txt)&&!confirm("A mensagem ainda tem trechos entre [colchetes] para preencher. Enviar mesmo assim?"))return;
-  if(!list.length)return toast("Nenhuma cliente com telefone cadastrado.");
-  if(!confirm(`Iniciar disparo para ${list.length} cliente(s)?`))return;
-  BC={list,i:0,on:true};bcShow();
-};
-$("bcRun").addEventListener("click",e=>{const b=e.target.closest("[data-bcact]");if(!b||!BC.on)return;
-  const a=b.dataset.bcact,c=BC.list[BC.i];
-  if(a==="send"&&c){window.open(`https://wa.me/${waNum(c.phone)}?text=${encodeURIComponent(bcMsg(c))}`,"_blank","noopener");BC.i++}
-  else if(a==="skip")BC.i++;
-  else if(a==="stop")BC.on=false;
-  bcShow();
-});
-
-/* ============ AVISOS NO SITE (duram 3 dias) ============ */
-let PROMOS=[];
-async function loadPromos(){
-  const{data,error}=await sb.from("site_promos").select("*").order("created_at",{ascending:false});
-  if(error){PROMOS=[];toast("Avisos: rode o arquivo <b>admin-agenda.sql</b> atualizado no Supabase. ("+esc(error.message)+")");return}
-  PROMOS=data;renderPromos();
-}
-function renderPromos(){
-  const now=Date.now(),act=PROMOS.filter(p=>new Date(p.ends_at).getTime()>now);
-  $("prCount").textContent=act.length?act.length+" ativo(s)":"";
-  $("prList").innerHTML=PROMOS.length?PROMOS.map(p=>{const live=new Date(p.ends_at).getTime()>now;
-    return`<div><span><b style="font-weight:500">${esc(p.title)}</b> · ${live?"no ar até "+fmtDT(p.ends_at):"expirado"}<br><small>${esc(p.message)}</small></span><button class="btn ghost sm" data-prdel="${esc(p.id)}" title="${live?"Tirar do ar":"Apagar"}">✕</button></div>`}).join(""):`<div class="empty" style="padding:18px">Nenhum aviso.</div>`;
-}
-$("prPublish").onclick=async()=>{
-  const title=$("prTitle").value.trim(),message=$("prMsg").value.trim();
-  if(!title||!message)return toast("Preencha título e mensagem.");
-  const ends=new Date(Date.now()+3*86400000).toISOString();
-  const{error}=await sb.from("site_promos").insert({title,message,ends_at:ends});
-  if(error)return toast("Não publicou: "+esc(error.message));
-  $("prTitle").value=$("prMsg").value="";toast("📣 Aviso publicado no site por 3 dias");await loadPromos();
-};
-$("prList").addEventListener("click",async e=>{const b=e.target.closest("[data-prdel]");if(!b)return;
-  if(!confirm("Remover este aviso do site?"))return;
-  const{error}=await sb.from("site_promos").delete().eq("id",b.dataset.prdel);
-  if(error)return toast("Não removeu: "+esc(error.message));await loadPromos();
-});
-
-/* ============ SISTEMA: ZERAR DADOS ============ */
-$("resetBtn").onclick=async()=>{
-  if($("resetConfirm").value.trim().toUpperCase()!=="ZERAR")return toast("Digite ZERAR para confirmar.");
-  if(!confirm("Apagar TODOS os agendamentos, o faturamento e os bloqueios? Não dá para desfazer."))return;
-  const a=await sb.from("bookings").delete().not("id","is",null);
-  const b=await sb.from("blocked_slots").delete().not("id","is",null);
-  if(a.error||b.error)return toast("Erro ao zerar: "+esc((a.error||b.error).message));
-  ALL=[];BLOCKS=[];agSel=null;justAdded=new Set();$("resetConfirm").value="";
-  fillFilters();renderAll();toast("✅ Dados zerados. Sistema pronto para uso.");
-};
 
 /* ============ UI ============ */
 function go(t){document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
