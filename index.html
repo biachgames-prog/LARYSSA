@@ -111,6 +111,24 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px;}
 form button{background:var(--gold-grad);background-size:200% 100%;color:var(--on-accent);font-weight:500;transition:background-position .5s ease;border:none;padding:14px 24px;border-radius:2px;font-size:.98rem;letter-spacing:.3px;margin-top:4px;}
 form button:hover{background-position:100% 0;}
 
+/* FICHA DE SAÚDE */
+form{max-width:620px;}
+.health{border:1px solid var(--ink);border-radius:2px;padding:14px 18px 10px;margin:4px 0 0;background:var(--surface);min-width:0;}
+.health legend{padding:0 8px;font-size:1.02rem;color:var(--ink);font-weight:500;}
+.health-cols{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;}
+@media(max-width:560px){.health-cols{grid-template-columns:1fr;}}
+.hq{display:flex;align-items:flex-end;gap:6px;padding:7px 0;font-size:.95rem;color:var(--ink);}
+.hq-label{flex:0 1 auto;white-space:nowrap;}
+.hq-dots{flex:1 1 12px;border-bottom:1.5px dotted var(--muted);transform:translateY(-4px);min-width:10px;}
+.hq-opts{display:flex;gap:6px;flex:0 0 auto;}
+.hq-opt{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.6rem;letter-spacing:.04em;color:var(--muted);cursor:pointer;}
+.hq-opt input{appearance:none;-webkit-appearance:none;width:22px;height:18px;margin:0;padding:0;border:1.5px solid var(--ink);border-radius:2px;background:transparent;cursor:pointer;position:relative;}
+.hq-opt input:checked{background:var(--accent);}
+.hq-opt input:checked::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--on-accent);line-height:1;}
+.hq.invalid .hq-label{color:var(--danger);}
+.hq.invalid .hq-opt input{border-color:var(--danger);}
+.health-note{font-size:.78rem;color:var(--muted);margin:4px 0 6px;}
+
 footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:center;color:var(--muted);font-size:.85rem;background:var(--surface);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 
 .location-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 26px;max-width:420px;}
@@ -376,6 +394,28 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
       <label>WhatsApp / telefone
         <input type="tel" name="phone" required placeholder="(79) 9 9999-9999">
       </label>
+      <fieldset class="health" id="healthBox">
+        <legend>Fale sobre sua Saúde</legend>
+        <div class="health-cols">
+          <div class="hq" data-q="lentes"><span class="hq-label">Usa lentes de contato?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_lentes" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_lentes" value="Não"></label></span></div>
+          <div class="hq" data-q="quimio"><span class="hq-label">Quimioterapia?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_quimio" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_quimio" value="Não"></label></span></div>
+          <div class="hq" data-q="lactante"><span class="hq-label">Lactante?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_lactante" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_lactante" value="Não"></label></span></div>
+          <div class="hq" data-q="tercol"><span class="hq-label">Terçol?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_tercol" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_tercol" value="Não"></label></span></div>
+          <div class="hq" data-q="alergia"><span class="hq-label">Alergia?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_alergia" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_alergia" value="Não"></label></span></div>
+          <div class="hq" data-q="blefarite"><span class="hq-label">Blefarite?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_blefarite" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_blefarite" value="Não"></label></span></div>
+          <div class="hq" data-q="gestante"><span class="hq-label">Gestante?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_gestante" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_gestante" value="Não"></label></span></div>
+          <div class="hq" data-q="conjuntivite"><span class="hq-label">Conjuntivite?</span><span class="hq-dots"></span>
+            <span class="hq-opts"><label class="hq-opt">SIM<input type="radio" name="h_conjuntivite" value="Sim"></label><label class="hq-opt">NÃO<input type="radio" name="h_conjuntivite" value="Não"></label></span></div>
+        </div>
+        <p class="health-note">Responda todas as perguntas. Essas informações seguem junto com o seu agendamento.</p>
+      </fieldset>
       <button type="submit">Enviar pedido no WhatsApp</button>
     </form>
   </div>
@@ -614,6 +654,22 @@ document.getElementById("bookingForm").addEventListener("submit", async (e)=>{
   const phone = form.phone.value.trim();
   if(!name || !phone) return;
 
+  // Ficha de saúde: todas as perguntas são obrigatórias
+  const HEALTH = [["lentes","Usa lentes de contato"],["quimio","Quimioterapia"],["lactante","Lactante"],["tercol","Terçol"],["alergia","Alergia"],["blefarite","Blefarite"],["gestante","Gestante"],["conjuntivite","Conjuntivite"]];
+  let firstMissing = null;
+  const healthLines = HEALTH.map(([k,label])=>{
+    const row = form.querySelector(`.hq[data-q="${k}"]`);
+    const picked = form.querySelector(`input[name="h_${k}"]:checked`);
+    row.classList.toggle("invalid", !picked);
+    if(!picked && !firstMissing) firstMissing = row;
+    return `${label}: ${picked ? picked.value : "—"}`;
+  });
+  if(firstMissing){
+    showToast("Preencha todas as perguntas de “Fale sobre sua Saúde” antes de finalizar.");
+    firstMissing.scrollIntoView({behavior:"smooth", block:"center"});
+    return;
+  }
+
   const [y,m,d] = selectedDate.split("-").map(Number);
   const dateLabel = new Date(y,m-1,d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"numeric"});
   const modelName = styleName(selectedStyle);
@@ -658,13 +714,15 @@ document.getElementById("bookingForm").addEventListener("submit", async (e)=>{
     `Nome: ${name}\n` +
     `Dia: ${dateLabel}\n` +
     `Horário: ${selectedTime}\n` +
-    `Modelo de cílios: ${modelName}`;
+    `Modelo de cílios: ${modelName}\n\n` +
+    `*Ficha de saúde*\n` + healthLines.join("\n");
   const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   window.open(waUrl, "_blank");
 
   showToast(`Vaga reservada, ${name.split(" ")[0]}! Agora é só enviar a mensagem no WhatsApp para confirmar.`);
 
   form.reset();
+  form.querySelectorAll(".hq.invalid").forEach(r=>r.classList.remove("invalid"));
   selectedDate = null; selectedTime = null; selectedStyle = null;
   document.getElementById("horarios").hidden = true;
   document.getElementById("formSection").hidden = true;
