@@ -57,6 +57,15 @@ section{padding:64px 0;background:var(--surface);backdrop-filter:blur(3px);-webk
 section h2{font-size:1.7rem;margin-bottom:28px;}
 .section-alt{border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
 
+/* BLUR ENTRE PÁGINAS — emenda suave + desfoque ao rolar */
+section:not(.hero-wrap),footer{position:relative;}
+section:not(.hero-wrap)::before,footer::before{content:"";position:absolute;left:0;right:0;top:-1px;height:110px;z-index:3;pointer-events:none;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  -webkit-mask-image:linear-gradient(to bottom,#000,transparent);mask-image:linear-gradient(to bottom,#000,transparent);}
+.hero-wrap + section::before{height:160px;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);}
+.scroll-blur{will-change:filter,opacity;}
+@media(prefers-reduced-motion:reduce){section::before,footer::before{display:none}}
+
 /* CALENDAR — glass style */
 .cal-glass{max-width:420px;border-radius:28px;padding:22px 20px 18px;background:rgba(28,20,6,.42);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.14);box-shadow:0 20px 50px -20px rgba(0,0,0,.5);color:#fff;}
 .cal-glass-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
@@ -740,6 +749,38 @@ function showToast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>{ t.hidden = true; }, 5000);
 }
+
+// Desfoque progressivo ao rolar: o conteúdo de cada página entra/sai da tela desfocado
+(function(){
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const MAX = 12;
+  let items = [], ticking = false;
+  function collect(){
+    items = [...document.querySelectorAll("section:not(.hero-wrap) > .wrap > *, footer > *")]
+      .filter(el => !el.hidden && !el.closest("[hidden]"));
+    items.forEach(el => el.classList.add("scroll-blur"));
+  }
+  function update(){
+    ticking = false;
+    const vh = window.innerHeight, zone = vh * 0.28;
+    for(const el of items){
+      const r = el.getBoundingClientRect();
+      if(r.height === 0) continue;
+      let amt = 0;
+      if(r.top > vh - zone) amt = Math.min(1, (r.top - (vh - zone)) / zone);          // entrando por baixo
+      else if(r.bottom < zone) amt = Math.min(1, (zone - r.bottom) / zone);            // saindo por cima
+      if(amt < 0.02){ if(el.style.filter){ el.style.filter = ""; el.style.opacity = ""; } continue; }
+      el.style.filter = "blur(" + (amt * MAX).toFixed(1) + "px)";
+      el.style.opacity = (1 - amt * 0.5).toFixed(2);
+    }
+  }
+  function req(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }
+  window.addEventListener("scroll", req, {passive:true});
+  window.addEventListener("resize", () => { collect(); req(); });
+  // seções que aparecem depois (horários, formulário, local) entram na lista
+  new MutationObserver(() => { collect(); req(); }).observe(document.getElementById("page") || document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
+  collect(); req();
+})();
 
 renderCalendar();
 renderStyles();
