@@ -93,21 +93,42 @@ section:not(.hero-wrap)::before,footer::before{content:"";position:absolute;left
 .slot.selected{background:var(--gold-grad);color:var(--on-accent);border-color:var(--accent);}
 .empty-msg{color:var(--muted);font-size:.95rem;}
 
-/* STYLES */
-.styles-row{display:flex;gap:18px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin;}
-.style-card{position:relative;flex:0 0 210px;height:290px;border-radius:16px;overflow:hidden;border:none;padding:0;text-align:left;box-shadow:0 10px 26px -14px rgba(60,40,5,.45);transition:transform .4s ease, box-shadow .4s ease;}
-.style-card:hover{transform:scale(1.045);box-shadow:0 20px 38px -12px hsl(var(--card-accent)/.55);}
-.style-card.selected{outline:2px solid var(--gold);outline-offset:2px;}
-.style-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease;}
-.style-card:hover .style-bg{transform:scale(1.12);}
-.style-overlay{position:absolute;inset:0;background:linear-gradient(to top, hsl(var(--card-accent)/.94), hsl(var(--card-accent)/.55) 32%, transparent 62%);}
-.style-content{position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;color:#fff;}
-.style-content h3{font-size:1.05rem;margin-bottom:6px;color:#fff;}
-.style-content p{font-size:.78rem;color:rgba(255,255,255,.9);line-height:1.45;margin-bottom:14px;}
-.style-pick{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.32);padding:8px 12px;border-radius:8px;width:fit-content;transition:background .3s ease;}
-.style-card:hover .style-pick{background:rgba(255,255,255,.3);}
-.style-pick svg{width:13px;height:13px;transform:translateX(0);transition:transform .3s ease;}
-.style-card:hover .style-pick svg{transform:translateX(3px);}
+/* STYLES — carrossel moderno */
+.styles-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;}
+.styles-head h2{margin:0;}
+.eyebrow{display:block;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent-dark);margin-bottom:8px;font-weight:500;}
+.styles-nav{display:flex;gap:10px;flex:none;}
+.styles-nav button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .3s,transform .3s,opacity .3s;}
+.styles-nav button:hover{background:var(--gold-grad);color:var(--on-accent);transform:scale(1.06);}
+.styles-nav button:disabled{opacity:.35;pointer-events:none;}
+.styles-nav svg{width:18px;height:18px;}
+.styles-stage{margin:0 -24px;}
+.styles-row{display:flex;gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;padding:30px calc(50% - 150px) 70px;margin-bottom:-36px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);}
+.styles-row::-webkit-scrollbar{display:none;}
+.style-card{position:relative;flex:0 0 300px;height:440px;border-radius:28px;overflow:hidden;border:1px solid rgba(255,255,255,.22);padding:0;text-align:left;scroll-snap-align:center;
+  box-shadow:0 22px 34px -24px hsl(var(--card-accent)/.7);transition:box-shadow .4s ease,border-color .4s;transform:scale(var(--sc,.9));opacity:var(--op,.7);will-change:transform,opacity;background:#1a1206;}
+.style-card.is-center{box-shadow:0 28px 44px -24px hsl(var(--card-accent)/.9);}
+.style-card.selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 28px 44px -24px hsl(var(--card-accent)/.9);}
+.style-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(var(--zoom,1.04));transition:transform .6s ease;filter:saturate(1.08) contrast(1.03);}
+.style-overlay{position:absolute;inset:0;background:linear-gradient(to top,hsl(var(--card-accent)/.9) 0,hsl(var(--card-accent)/.35) 30%,transparent 52%),linear-gradient(to bottom,rgba(0,0,0,.28),transparent 22%);}
+.style-num{position:absolute;top:18px;left:20px;font-family:'Playfair Display',serif;font-size:.95rem;letter-spacing:.14em;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.5);z-index:2;}
+.style-check{position:absolute;top:14px;right:14px;z-index:2;width:34px;height:34px;border-radius:50%;background:var(--gold-grad);color:var(--on-accent);display:grid;place-items:center;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1);}
+.style-check svg{width:16px;height:16px;}
+.style-card.selected .style-check{transform:scale(1);}
+.style-content{position:absolute;left:12px;right:12px;bottom:12px;padding:18px 18px 16px;border-radius:20px;color:#fff;background:rgba(20,13,3,.42);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.18);display:flex;flex-direction:column;}
+.style-content h3{font-size:1.3rem;margin-bottom:6px;color:#fff;}
+.style-content p{font-size:.8rem;color:rgba(255,255,255,.9);line-height:1.5;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.style-pick{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:.84rem;font-weight:500;background:var(--gold-grad);color:var(--on-accent);padding:11px 16px;border-radius:999px;width:100%;transition:filter .3s,gap .3s;}
+.style-card:hover .style-pick{filter:brightness(1.08);gap:12px;}
+.style-pick svg{width:14px;height:14px;}
+.styles-progress{height:3px;border-radius:3px;background:var(--line);margin:0 auto;max-width:220px;overflow:hidden;}
+.styles-progress i{display:block;height:100%;width:30%;border-radius:3px;background:var(--gold-grad);transform:translateX(0);transition:transform .15s linear;}
+@media(max-width:720px){
+  .styles-row{padding-inline:calc(50% - 138px);gap:16px}
+  .style-card{flex-basis:276px;height:420px}
+  .styles-nav{display:none}
+}
 
 /* FORM */
 .summary{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px;margin-bottom:24px;font-size:.95rem;}
@@ -331,9 +352,16 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));text-align:ce
 
 <section id="estilos">
   <div class="wrap">
-    <h2>Escolha o modelo de cílios</h2>
-    <div class="styles-row" id="stylesRow"></div>
+    <div class="styles-head">
+      <div><span class="eyebrow">Nossos modelos</span><h2>Escolha o modelo de cílios</h2></div>
+      <div class="styles-nav">
+        <button type="button" id="stylesPrev" aria-label="Modelo anterior"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3M7 4L3 8l4 4"/></svg></button>
+        <button type="button" id="stylesNext" aria-label="Próximo modelo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+      </div>
+    </div>
   </div>
+  <div class="styles-stage"><div class="styles-row" id="stylesRow"></div></div>
+  <div class="wrap"><div class="styles-progress"><i id="stylesBar"></i></div></div>
 </section>
 
 <section id="provador" class="section-alt">
@@ -605,19 +633,24 @@ async function renderSlots(){
 
 function renderStyles(){
   const row = document.getElementById("stylesRow");
+  const keep = row.scrollLeft;
+  row.style.scrollBehavior = "auto";
   row.innerHTML = "";
-  STYLES.forEach(s=>{
+  STYLES.forEach((s,i)=>{
     const card = document.createElement("button");
+    card.type = "button";
     card.className = "style-card";
     card.style.setProperty("--card-accent", s.accent);
     if(s.id === selectedStyle) card.classList.add("selected");
     card.innerHTML = `
       <img class="style-bg" src="${s.img}" alt="Cílios estilo ${s.name}" loading="lazy">
       <div class="style-overlay"></div>
+      <span class="style-num">${String(i+1).padStart(2,"0")} / ${String(STYLES.length).padStart(2,"0")}</span>
+      <span class="style-check"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg></span>
       <div class="style-content">
         <h3>${s.name}</h3>
         <p>${s.desc}</p>
-        <span class="style-pick">Escolher modelo
+        <span class="style-pick">${s.id === selectedStyle ? "Modelo escolhido" : "Escolher modelo"}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
         </span>
       </div>`;
@@ -625,10 +658,44 @@ function renderStyles(){
       selectedStyle = s.id;
       renderStyles();
       updateFormVisibility();
+      const c = document.getElementById("stylesRow").children[i];
+      if(c){ document.getElementById("stylesRow").style.scrollBehavior = "smooth"; c.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }
     });
     row.appendChild(card);
   });
+  row.scrollLeft = keep;
+  requestAnimationFrame(()=>{ row.style.scrollBehavior = ""; stylesFx(); });
 }
+
+// Carrossel: o card do centro cresce e ganha brilho; os outros recuam
+function stylesFx(){
+  const row = document.getElementById("stylesRow"); if(!row) return;
+  const rc = row.getBoundingClientRect(), mid = rc.left + rc.width/2;
+  let best = null, bd = 1e9;
+  [...row.children].forEach(c=>{
+    const r = c.getBoundingClientRect(), d = Math.abs((r.left + r.width/2) - mid);
+    const t = Math.min(1, d / (r.width * 1.1));
+    c.style.setProperty("--sc", (1 - t*0.12).toFixed(3));
+    c.style.setProperty("--op", (1 - t*0.4).toFixed(2));
+    c.style.setProperty("--zoom", (1.04 + (1-t)*0.04).toFixed(3));
+    if(d < bd){ bd = d; best = c; }
+  });
+  [...row.children].forEach(c=>c.classList.toggle("is-center", c === best));
+  const max = row.scrollWidth - row.clientWidth, p = max > 0 ? row.scrollLeft / max : 0;
+  const bar = document.getElementById("stylesBar");
+  if(bar) bar.style.transform = `translateX(${(p * (100/0.3 - 100)).toFixed(1)}%)`;
+  const pv = document.getElementById("stylesPrev"), nx = document.getElementById("stylesNext");
+  if(pv) pv.disabled = row.scrollLeft < 8;
+  if(nx) nx.disabled = row.scrollLeft > max - 8;
+}
+(function(){
+  const row = document.getElementById("stylesRow"); let tk = false;
+  row.addEventListener("scroll", ()=>{ if(!tk){ tk = true; requestAnimationFrame(()=>{ tk = false; stylesFx(); }); } }, {passive:true});
+  window.addEventListener("resize", stylesFx);
+  const step = dir => { const c = row.children[0]; if(c) row.scrollBy({left: dir * (c.getBoundingClientRect().width + 22), behavior:"smooth"}); };
+  document.getElementById("stylesPrev").addEventListener("click", ()=>step(-1));
+  document.getElementById("stylesNext").addEventListener("click", ()=>step(1));
+})();
 
 function styleName(id){ return (STYLES.find(s=>s.id===id) || {}).name || ""; }
 
@@ -768,7 +835,7 @@ function showToast(msg){
       if(r.height === 0) continue;
       let amt = 0;
       if(r.top > vh - zone) amt = Math.min(1, (r.top - (vh - zone)) / zone);          // entrando por baixo
-      else if(r.bottom < zone) amt = Math.min(1, (zone - r.bottom) / zone);            // saindo por cima
+      else if(r.bottom < 90) amt = Math.min(1, (90 - r.bottom) / 160);                 // saindo por cima (abaixo da barra do topo)
       if(amt < 0.02){ if(el.style.filter){ el.style.filter = ""; el.style.opacity = ""; } continue; }
       el.style.filter = "blur(" + (amt * MAX).toFixed(1) + "px)";
       el.style.opacity = (1 - amt * 0.5).toFixed(2);
