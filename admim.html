@@ -268,7 +268,7 @@ textarea.inp{width:100%;resize:vertical;min-height:150px;line-height:1.5}
             <button class="btn ghost sm" id="agNext">›</button>
           </div>
           <div class="ag-grid" id="agGrid"></div>
-          <p style="color:var(--dim);font-size:.75rem;margin-top:10px">Toque em um dia para ver os horários. Dias em vermelho estão bloqueados no site; cinza = fechado (dom/seg). Use <b>＋ Agendamento exclusivo</b> para registrar a cliente que fechou direto com você.</p>
+          <p style="color:var(--dim);font-size:.75rem;margin-top:10px">Toque em um dia para ver os horários. Dias em vermelho estão bloqueados no site; cinza = fechado (domingo). Use <b>＋ Agendamento exclusivo</b> para registrar a cliente que fechou direto com você.</p>
         </div>
         <div>
           <div class="box" id="agDetail" style="margin-bottom:14px"></div>
@@ -378,8 +378,13 @@ const PALETTE = ["#F5D867","#E3B640","#C8961E","#FFE9A8","#B8861C","#E8CF8A","#9
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* >>> Mantenha igual ao site (index.html): horários e dias fechados <<< */
-const SLOT_TIMES=["09:00","11:00","13:00","15:00","17:00"];
-const CLOSED_DAYS=[0,1]; // domingo, segunda
+/* Mesmos horários do site (index.html) */
+const SLOTS_WEEK=["09:00","10:10","11:20","12:30","13:40","14:50","16:00","17:10","18:20","19:30"]; // segunda a sexta
+const SLOTS_SAT=["09:00","10:10","11:20","12:30","13:40","14:50","16:00","17:10","18:20"];          // sábado
+const SLOT_TIMES=SLOTS_WEEK;
+const CLOSED_DAYS=[0]; // domingo
+const slotsFor=dow=>dow===6?SLOTS_SAT:SLOTS_WEEK;
+const slotsForKey=k=>slotsFor(new Date(k+"T00:00").getDay());
 const MONTHS=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 let BLOCKS=[], CLIENTS={}, AG={y:new Date().getFullYear(),m:new Date().getMonth()}, agSel=null;
 let ALL=[], PRICES=[], period="30", basis="pedido", charts={}, channel=null, justAdded=new Set();
@@ -683,7 +688,7 @@ function renderAgendaDay(){
   if(!agSel){box.innerHTML=`<div class="ag-head" style="flex-wrap:wrap"><h3 style="margin:0">Horários do dia</h3>${EX_BTN}</div><div class="empty" style="padding:24px">Selecione um dia no calendário.</div>`;return}
   const k=agSel,todayK=keyOf(new Date()),past=k<todayK,full=dayBlock(k),dow=new Date(k+"T00:00").getDay();
   const bks=bookingsOn(k);
-  const times=[...new Set([...SLOT_TIMES,...bks.map(b=>time5(b.booking_time))])].sort();
+  const times=[...new Set([...slotsForKey(k),...bks.map(b=>time5(b.booking_time))])].sort();
   const rows=times.map(t=>{
     const bk=bks.find(b=>time5(b.booking_time)===t&&isSale(b))||bks.find(b=>time5(b.booking_time)===t);
     const sb_=slotBlock(k,t);
@@ -765,21 +770,21 @@ const isExc=b=>String(b.notes||"").startsWith(EXC_TAG);
 const excReason=n=>`Exclusivo · ${n}`;
 const excBlocks=b=>BLOCKS.filter(x=>x.block_date===b.booking_date&&x.block_time&&x.reason===excReason(b.name));
 const mins=t=>{const[h,m]=String(t||"").split(":").map(Number);return h*60+m};
-const SLOT_GAP=SLOT_TIMES.length>1?Math.min(...SLOT_TIMES.slice(1).map((t,i)=>mins(t)-mins(SLOT_TIMES[i]))):120;
+const SLOT_GAP=70; // intervalo entre horários do site
 const normM=s=>String(s||"").toLowerCase().trim();
 const priceOf=st=>PRICES.find(p=>normM(p.model)===normM(st)||(p.aliases||[]).some(a=>normM(a)===normM(st)));
 let exStatusTouched=false;
 
-/* horários do site que encostam num horário fora da grade (ex.: 10:00 pega 09:00 e 11:00) */
+/* horários do site que encostam num horário fora da grade (ex.: 10:00 pega 09:00 e 10:10) */
 function exNeighbors(k,t){
   if(!k||!t||k<keyOf(new Date())||dayBlock(k))return[];
   const tm=mins(t),bks=bookingsOn(k).filter(isSale);
-  return SLOT_TIMES.filter(s=>s!==t&&Math.abs(mins(s)-tm)<SLOT_GAP&&!slotBlock(k,s)&&!bks.some(b=>time5(b.booking_time)===s));
+  return slotsForKey(k).filter(s=>s!==t&&Math.abs(mins(s)-tm)<SLOT_GAP&&!slotBlock(k,s)&&!bks.some(b=>time5(b.booking_time)===s));
 }
 function exRefresh(){
   const k=$("exDate").value,t=$("exTime").value;
   const bks=k?bookingsOn(k).filter(isSale):[];
-  $("exSlots").innerHTML=k?SLOT_TIMES.map(s=>{const busy=bks.some(b=>time5(b.booking_time)===s);
+  $("exSlots").innerHTML=k?slotsForKey(k).map(s=>{const busy=bks.some(b=>time5(b.booking_time)===s);
     return`<button type="button" data-t="${s}" class="${s===t?"on":""}" ${busy?"disabled":""}>${s}${busy?" · ocupado":""}</button>`}).join(""):"";
   const nb=exNeighbors(k,t);
   $("exAlsoWrap").hidden=!nb.length;
