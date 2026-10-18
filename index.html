@@ -744,6 +744,19 @@ function showToast(msg){
 renderCalendar();
 renderStyles();
 loadBlocked().then(renderCalendar); // aplica bloqueios do painel assim que carregar
+// Mantém os bloqueios do painel sempre atualizados (a cada 30s e ao voltar para a aba)
+async function refreshBlocked(){
+  const before = JSON.stringify(BLOCKED);
+  await loadBlocked();
+  if(JSON.stringify(BLOCKED) === before) return;
+  renderCalendar();
+  if(selectedDate){
+    if(selectedTime && isSlotBlocked(selectedDate, selectedTime)){ selectedTime = null; updateFormVisibility(); }
+    await renderSlots();
+  }
+}
+setInterval(refreshBlocked, 30000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) refreshBlocked(); });
 
 // Aplica o mesmo vídeo ao fundo fixo e ao hero (sem duplicar o arquivo)
 document.getElementById("bgVideo").src = VIDEO_SRC;
